@@ -17,8 +17,7 @@ When implementing an issue, follow this sequence:
 
 1. **Read the issue** — understand the acceptance criteria and the `## Last step` section
 2. **Explore the codebase** — read relevant source files and tests before making changes
-3. **Write failing tests** — one test per acceptance criterion; run them to confirm they fail
-4. **Implement** — write the minimum code to make the tests pass; prefer editing existing files
+3. **Write failing tests then implement** — invoke the `tdd` skill; it drives the red → green loop
 5. **Run the full gate** — `just check` must pass before committing
 6. **Write the article stub** — as the last implementation step, per `articles.md`
 7. **Commit** — all changed files in one commit
