@@ -9,13 +9,13 @@ from typing import TYPE_CHECKING
 
 from pydantic import Field
 
-from cawmen_backend.models import StrictModel
+from cawmen_backend.models import FrozenModel
 
 if TYPE_CHECKING:
     from pathlib import Path
 
 
-class Location(StrictModel):
+class Location(FrozenModel):
     """A single Location in the graph, tagged with the Location Stage that gates it."""
 
     id: str
@@ -23,14 +23,14 @@ class Location(StrictModel):
     stage: int
 
 
-class Connection(StrictModel):
+class Connection(FrozenModel):
     """A travel connection between two Locations."""
 
     from_: str = Field(alias="from")
     to: str
 
 
-class LocationGraph(StrictModel):
+class LocationGraph(FrozenModel):
     """The full set of Locations and their connections defined in a Scenario."""
 
     name: str

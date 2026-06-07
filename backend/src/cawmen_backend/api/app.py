@@ -2,10 +2,10 @@
 
 from fastapi import FastAPI
 
-from cawmen_backend.models import StrictModel
+from cawmen_backend.models import FrozenModel
 
 
-class HealthResponse(StrictModel):
+class HealthResponse(FrozenModel):
     """Liveness payload polled by the TUI launcher before it connects (ADR-0007)."""
 
     status: str

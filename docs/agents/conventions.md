@@ -25,7 +25,7 @@ wired into pre-commit and CI):
 
 - `CAW001` — no `from __future__ import annotations` (Python 3.14 evaluates annotations
   lazily via PEP 649, so `TYPE_CHECKING`-guarded imports work without it).
-- `CAW002` — Pydantic models inherit `StrictModel` (`cawmen_backend/models.py`, which sets
+- `CAW002` — Pydantic models inherit `FrozenModel` (`cawmen_backend/models.py`, which sets
   `ConfigDict(extra="forbid", frozen=True)`), never `BaseModel` directly.
 - `CAW003` — `Protocol` methods omit `...`; the docstring is body enough.
 - `CAW004` — docstrings use single backticks, never double.

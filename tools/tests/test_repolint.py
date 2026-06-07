@@ -31,8 +31,8 @@ def test_flags_bare_basemodel_subclass() -> None:
 
 
 def test_allows_strict_model_itself() -> None:
-    """StrictModel is the one class permitted to inherit BaseModel."""
-    source = "class StrictModel(BaseModel):\n    pass\n"
+    """FrozenModel is the one class permitted to inherit BaseModel."""
+    source = "class FrozenModel(BaseModel):\n    pass\n"
 
     assert "CAW002" not in _codes(source)
 

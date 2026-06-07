@@ -3,7 +3,7 @@
 Encodes the rules in the `repo-coding-conventions` policy:
 
   CAW001  no `from __future__ import annotations` (3.14 evaluates annotations lazily)
-  CAW002  Pydantic models inherit `StrictModel`, never `BaseModel` directly
+  CAW002  Pydantic models inherit `FrozenModel`, never `BaseModel` directly
   CAW003  `Protocol` methods omit `...` — the docstring is body enough
   CAW004  docstrings use single backticks, never double
   CAW005  homogeneous sequences use `list`, not `tuple[T, ...]`
@@ -79,7 +79,7 @@ def _check_future_import(tree: ast.Module, path: Path) -> Iterator[Violation]:
 
 def _check_strict_model(tree: ast.Module, path: Path) -> Iterator[Violation]:
     for node in ast.walk(tree):
-        if not isinstance(node, ast.ClassDef) or node.name == "StrictModel":
+        if not isinstance(node, ast.ClassDef) or node.name == "FrozenModel":
             continue
         if any(_is_named(base, "BaseModel") for base in node.bases):
             yield Violation(
@@ -87,7 +87,7 @@ def _check_strict_model(tree: ast.Module, path: Path) -> Iterator[Violation]:
                 node.lineno,
                 node.col_offset + 1,
                 "CAW002",
-                f"`{node.name}` must inherit `StrictModel`, not `BaseModel`",
+                f"`{node.name}` must inherit `FrozenModel`, not `BaseModel`",
             )
 
 
