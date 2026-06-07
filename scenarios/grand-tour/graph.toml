@@ -41,3 +41,13 @@ to = "madrid"
 [[connections]]
 from = "madrid"
 to = "paris"
+
+[[locations]]
+id = "escape"
+name = "Escape"
+stage = 0
+escape = true
+
+[[connections]]
+from = "madrid"
+to = "escape"

@@ -21,6 +21,7 @@ class Location(FrozenModel):
     id: str
     name: str
     stage: int
+    escape: bool = False
 
 
 class Connection(FrozenModel):

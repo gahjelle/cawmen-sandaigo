@@ -11,12 +11,20 @@ def test_loads_the_authored_locations_in_order() -> None:
     """The loader preserves the Locations in their authored order."""
     graph = load_location_graph(SCENARIOS / "grand-tour" / "graph.toml")
 
-    assert [location.id for location in graph.locations] == [
+    assert [location.id for location in graph.locations if not location.escape] == [
         "paris",
         "berlin",
         "rome",
         "madrid",
     ]
+
+
+def test_escape_location_is_distinguished() -> None:
+    """The Escape Location is loaded but marked so the API can exclude it."""
+    graph = load_location_graph(SCENARIOS / "grand-tour" / "graph.toml")
+
+    escape = next(loc for loc in graph.locations if loc.escape)
+    assert escape.id == "escape"
 
 
 def test_loads_connections_between_locations() -> None:
