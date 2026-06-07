@@ -1,7 +1,5 @@
 """Contract tests for the hand-rolled typed backend client (ADR-0009)."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 from cawmen_tui.client import BackendClient

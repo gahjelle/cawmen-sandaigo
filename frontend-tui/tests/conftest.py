@@ -1,10 +1,8 @@
 """Shared fixtures: an httpx client wired in-process to the real backend ASGI app.
 
-Per ADR-0007/0009, the primary test transport is ``httpx.ASGITransport`` over the real
+Per ADR-0007/0009, the primary test transport is `httpx.ASGITransport` over the real
 FastAPI app — deterministic and exercising the same typed client the run path uses.
 """
-
-from __future__ import annotations
 
 from typing import TYPE_CHECKING
 

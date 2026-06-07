@@ -32,6 +32,9 @@ jobs:
       - name: Type check (ty)
         run: uv run ty check
 
+      - name: Repo conventions (repolint)
+        run: uv run python -m tools.repolint
+
       - name: Tests (pytest)
         run: uv run pytest
 

@@ -11,3 +11,9 @@ Default label vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `read
 ### Domain docs
 
 Multi-context layout — `CONTEXT-MAP.md` at the root points to per-context `CONTEXT.md` files (backend + frontends). See `docs/agents/domain.md`.
+
+## Tooling & conventions
+
+Everything runs through `uv`; the full local gate is `just check`. Strict ruff (`ALL`) +
+`ty`-only typing, plus repo-specific rules enforced by `uv run python -m tools.repolint`.
+See `docs/agents/conventions.md`.

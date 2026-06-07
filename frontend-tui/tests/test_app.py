@@ -1,7 +1,5 @@
 """Pilot tests driving the Textual app against the in-process backend."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 from textual.widgets import Static

@@ -23,6 +23,10 @@ fmt-check:
 typecheck:
     uv run ty check
 
+# Enforce repo-specific conventions ruff/ty can't express.
+conventions *args:
+    uv run python -m tools.repolint {{args}}
+
 # Run the test suite.
 test:
     uv run pytest
@@ -35,8 +39,8 @@ openapi:
 openapi-check:
     uv run cawmen-backend openapi --check
 
-# The full gate: lint, format, types, tests, schema freshness.
-check: lint fmt-check typecheck test openapi-check
+# The full gate: lint, format, types, conventions, tests, schema freshness.
+check: lint fmt-check typecheck conventions test openapi-check
 
 # Run the pre-commit hooks across all files via prek.
 hooks:

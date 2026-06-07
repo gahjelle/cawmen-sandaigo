@@ -19,7 +19,7 @@ def serve(*, host: str = "127.0.0.1", port: int = 8000) -> None:
 
 @app.command
 def openapi(*, path: Path = Path("openapi.json"), check: bool = False) -> None:
-    """Write the OpenAPI schema to ``path``; ``--check`` verifies it is current."""
+    """Write the OpenAPI schema to `path`; `--check` verifies it is current."""
     if check:
         if not openapi_is_current(path):
             msg = f"{path} is stale; regenerate with `cawmen-backend openapi`."

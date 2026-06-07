@@ -1,7 +1,5 @@
 """The committed OpenAPI schema is the API contract (ADR-0009)."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 from cawmen_backend.api.schema import openapi_is_current, render_openapi

@@ -1,4 +1,4 @@
-"""The TextProvider port: turns the core's structured facts into prose.
+"""The `TextProvider` port: turns the core's structured facts into prose.
 
 The pure core never holds language; rendering text in the player's Language Preference
 is entirely a shell concern (ADR-0008). Templated now, AI at Stage 5.
@@ -12,11 +12,10 @@ class TextProvider(Protocol):
 
     def clock(self, *, day: int, language: str) -> str:
         """Render the In-Game Clock for the given day."""
-        ...
 
 
 class TemplatedTextProvider:
-    """A ``TextProvider`` backed by per-language templates (no AI)."""
+    """A `TextProvider` backed by per-language templates (no AI)."""
 
     _DAY_LABELS: ClassVar[dict[str, str]] = {"en": "Day", "no": "Dag"}
 

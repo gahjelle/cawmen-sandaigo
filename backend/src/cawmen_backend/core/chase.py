@@ -9,7 +9,7 @@ type LocationId = str
 class FugitiveRoute:
     """The fugitive's secret timed path; the final Location is the Escape Location."""
 
-    locations: tuple[LocationId, ...]
+    locations: list[LocationId]
 
 
 @dataclass(frozen=True)

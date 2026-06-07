@@ -1,10 +1,11 @@
 """The FastAPI application factory and its routes."""
 
 from fastapi import FastAPI
-from pydantic import BaseModel
+
+from cawmen_backend.models import StrictModel
 
 
-class HealthResponse(BaseModel):
+class HealthResponse(StrictModel):
     """Liveness payload polled by the TUI launcher before it connects (ADR-0007)."""
 
     status: str

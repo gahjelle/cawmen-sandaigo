@@ -2,6 +2,7 @@
   "components": {
     "schemas": {
       "HealthResponse": {
+        "additionalProperties": false,
         "description": "Liveness payload polled by the TUI launcher before it connects (ADR-0007).",
         "properties": {
           "status": {

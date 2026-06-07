@@ -5,8 +5,6 @@ TUI consumes the same public contract any client would, with contract tests guar
 client's expectations against the live schema.
 """
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -22,7 +20,7 @@ class Health:
 
 
 class BackendClient:
-    """Typed REST client over an injected httpx ``AsyncClient`` (real wire or ASGI)."""
+    """Typed REST client over an injected httpx `AsyncClient` (real wire or ASGI)."""
 
     def __init__(self, http: httpx.AsyncClient) -> None:
         """Wrap the given httpx client; the caller owns its lifecycle."""

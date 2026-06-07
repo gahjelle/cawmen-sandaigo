@@ -24,7 +24,7 @@ class CawmenApp(App[None]):
     ) -> None:
         """Build the app around an injected backend client (ADR-0007/0009).
 
-        ``owned_http`` is the client's transport when the app created it itself (the run
+        `owned_http` is the client's transport when the app created it itself (the run
         path) and must therefore close it on exit; injected clients (tests) own theirs.
         """
         super().__init__()
