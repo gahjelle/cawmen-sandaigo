@@ -17,11 +17,12 @@ When implementing an issue, follow this sequence:
 
 1. **Read the issue** — understand the acceptance criteria and the `## Last step` section
 2. **Explore the codebase** — read relevant source files and tests before making changes
-3. **Implement** — make the changes; prefer editing existing files
-4. **Run the full gate** — `just check` must pass before committing
-5. **Write the article stub** — as the last implementation step, per `articles.md`
-6. **Commit** — all changed files in one commit
-7. **Close the issue** — two edits to the issue file:
+3. **Write failing tests** — one test per acceptance criterion; run them to confirm they fail
+4. **Implement** — write the minimum code to make the tests pass; prefer editing existing files
+5. **Run the full gate** — `just check` must pass before committing
+6. **Write the article stub** — as the last implementation step, per `articles.md`
+7. **Commit** — all changed files in one commit
+8. **Close the issue** — two edits to the issue file:
    - Change `Status: ready-for-agent` → `Status: done`
    - Append a `## Comments` section with the date, commit hash, and a one-line summary
 

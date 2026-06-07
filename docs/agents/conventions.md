@@ -36,6 +36,12 @@ wired into pre-commit and CI):
 `--fix` covers the safe textual rules (`CAW001`, `CAW004`); the rest report-only with a
 hint, since they need import management.
 
+## Testing
+
+New behaviour is written test-first (red → green): write a failing test that pins the
+expected behaviour, then write the minimum implementation to make it pass. Do not write
+implementation code before a test exists for it.
+
 ## Style
 
 - Docstrings are minimal one-liners that add intent — type hints and good parameter names
