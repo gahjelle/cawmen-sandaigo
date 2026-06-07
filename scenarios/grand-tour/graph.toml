@@ -1,0 +1,43 @@
+# Stage-0 Scenario: a tiny European Location Graph.
+#
+# Only the Location Graph is authored here; the Suspect roster arrives at Stage 4.
+# The Fugitive Route is not authored — it is generated deterministically from the
+# Case Seed over this graph (a trivial walk at Stage 0).
+
+name = "grand-tour"
+
+[[locations]]
+id = "paris"
+name = "Paris"
+stage = 0
+
+[[locations]]
+id = "berlin"
+name = "Berlin"
+stage = 0
+
+[[locations]]
+id = "rome"
+name = "Rome"
+stage = 0
+
+[[locations]]
+id = "madrid"
+name = "Madrid"
+stage = 0
+
+[[connections]]
+from = "paris"
+to = "berlin"
+
+[[connections]]
+from = "berlin"
+to = "rome"
+
+[[connections]]
+from = "rome"
+to = "madrid"
+
+[[connections]]
+from = "madrid"
+to = "paris"
