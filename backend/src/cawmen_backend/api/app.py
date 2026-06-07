@@ -85,8 +85,6 @@ def create_app(scenarios_dir: Path = Path("scenarios")) -> FastAPI:
     def create_case(body: CreateCaseRequest) -> CreateCaseResponse:
         seed = body.seed or str(uuid.uuid4())
         graph = load_location_graph(scenarios_dir / body.scenario / "graph.toml")
-        rng = random.Random(derive_seed(seed, "route"))  # noqa: S311
-        generate_route(graph, rng)
         store.save(seed, CaseState(day=1))
         case_scenarios[seed] = body.scenario
         escape_id = next(loc.id for loc in graph.locations if loc.escape)
