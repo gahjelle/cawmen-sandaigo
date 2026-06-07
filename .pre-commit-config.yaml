@@ -1,0 +1,40 @@
+# Run with prek (reads this same config): `uv run prek run --all-files`.
+# Hooks are `language: system` so they use the workspace venv's pinned tools (uv.lock),
+# not separately-pinned mirror versions.
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check
+        entry: uv run ruff check --fix
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
+
+      - id: ruff-format
+        name: ruff format
+        entry: uv run ruff format
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
+
+      - id: ty
+        name: ty check
+        entry: uv run ty check
+        language: system
+        pass_filenames: false
+        require_serial: true
+
+      - id: repo-conventions
+        name: repo conventions (repolint)
+        entry: uv run python -m tools.repolint --fix
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
+
+      - id: openapi-staleness
+        name: openapi schema is current
+        entry: uv run cawmen-backend openapi --check
+        language: system
+        pass_filenames: false
+        files: ^(backend/.*\.py|openapi\.json)$
