@@ -48,14 +48,14 @@ def test_post_cases_same_seed_produces_same_result(client: TestClient) -> None:
 
 
 def test_get_case_returns_day_one_and_fugitive_location(client: TestClient) -> None:
-    """GET /cases/{id} returns day 1 and a valid fugitive location after creation."""
+    """GET /cases/{id} returns day 1 and a named location (Escape Location excluded)."""
     client.post("/cases", json={"scenario": "grand-tour", "seed": "s3"})
     response = client.get("/cases/s3")
 
     assert response.status_code == 200
     data = response.json()
     assert data["day"] == 1
-    assert data["fugitive_location"] in ["paris", "berlin", "rome", "madrid", "escape"]
+    assert data["fugitive_location"] in ["paris", "berlin", "rome", "madrid"]
 
 
 def test_get_unknown_case_returns_404(client: TestClient) -> None:
@@ -78,14 +78,27 @@ def test_advance_unknown_case_returns_404(client: TestClient) -> None:
 
 
 def test_advance_after_escape_returns_409(client: TestClient) -> None:
-    """POST /cases/{id}/advance returns 409 once the fugitive has escaped."""
+    """POST /cases/{id}/advance returns 409 when the fugitive would escape."""
     seed = "escape-test"
     client.post("/cases", json={"scenario": "grand-tour", "seed": seed})
-    # grand-tour has 4 non-escape locations; route length is 5; escape at day 5
-    for _ in range(4):
+    # 4 named locations → 3 successful advances (days 2, 3, 4), 4th hits the escape
+    for _ in range(3):
         client.post(f"/cases/{seed}/advance")
 
     response = client.post(f"/cases/{seed}/advance")
 
     assert response.status_code == 409
     assert response.json()["detail"] == "trail_gone_cold"
+
+
+def test_escape_location_is_never_returned_as_fugitive_location(
+    client: TestClient,
+) -> None:
+    """The fugitive_location field never exposes the Escape Location id."""
+    seed = "no-escape-leak"
+    client.post("/cases", json={"scenario": "grand-tour", "seed": seed})
+
+    named = ["paris", "berlin", "rome", "madrid"]
+    for _ in range(3):
+        response = client.post(f"/cases/{seed}/advance")
+        assert response.json()["fugitive_location"] in named

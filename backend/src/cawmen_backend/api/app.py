@@ -118,9 +118,9 @@ def create_app(scenarios_dir: Path = Path("scenarios")) -> FastAPI:
         if state is None:
             raise HTTPException(status_code=404)
         route = _reconstruct_route(case_id, case_scenarios[case_id])
-        if has_escaped(route, state):
-            raise HTTPException(status_code=409, detail="trail_gone_cold")
         new_state = advance_clock(state)
+        if has_escaped(route, new_state):
+            raise HTTPException(status_code=409, detail="trail_gone_cold")
         store.save(case_id, new_state)
         return CaseResponse(
             day=new_state.day,
