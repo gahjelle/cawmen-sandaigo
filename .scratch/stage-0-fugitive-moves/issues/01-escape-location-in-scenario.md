@@ -1,6 +1,6 @@
 # Add Escape Location to grand-tour Scenario
 
-Status: ready-for-agent
+Status: done
 
 Add a hidden Escape Location to `scenarios/grand-tour/graph.toml`. It must be defined
 in the file (so `load_location_graph` loads it) but distinguished from the named
@@ -16,3 +16,7 @@ Locations so the API can exclude it from the location list it returns to clients
 ## Last step
 
 Write an article stub in `articles/00-the-fugitive-moves/` per `docs/agents/articles.md`.
+
+## Comments
+
+2026-06-08 — Implemented in c1110ac. Added `escape = true` location to `graph.toml` connected from Madrid; `Location` model gains `escape: bool = False`; article stub written at `articles/00-the-fugitive-moves/escape-location-in-scenario.md`.

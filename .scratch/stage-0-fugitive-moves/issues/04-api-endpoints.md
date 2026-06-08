@@ -1,6 +1,6 @@
 # Wire Stage 0 API Endpoints
 
-Status: ready-for-agent
+Status: done
 
 Depends on: 01, 02, 03
 
@@ -47,3 +47,7 @@ Note: `fugitive_location` is scaffolding — removed in Stage 1.
 ## Last step
 
 Write an article stub in `articles/00-the-fugitive-moves/` per `docs/agents/articles.md`.
+
+## Comments
+
+2026-06-08 — Implemented in f8f498e. POST /cases, GET /cases/{id}, POST /cases/{id}/advance wired to core. Fixed off-by-one in advance endpoint (cccc0d8) — escape location is never exposed to clients. Article at articles/00-the-fugitive-moves/api-endpoints.md.

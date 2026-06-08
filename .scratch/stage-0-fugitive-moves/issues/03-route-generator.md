@@ -1,6 +1,6 @@
 # Implement Seeded Route Generator
 
-Status: ready-for-agent
+Status: done
 
 Depends on: 01 (Escape Location in scenario), 02 (seed splitter)
 
@@ -28,3 +28,7 @@ The resulting `FugitiveRoute.locations` has `len(non_escape_locations) + 1` entr
 ## Last step
 
 Write an article stub in `articles/00-the-fugitive-moves/` per `docs/agents/articles.md`.
+
+## Comments
+
+2026-06-08 — Implemented in c77d8c4. Moved Location/Connection/LocationGraph to core/location.py; added generate_route to core/route.py with 4 tests. Article stub at articles/00-the-fugitive-moves/route-generator.md.

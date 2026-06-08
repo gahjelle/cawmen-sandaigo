@@ -1,6 +1,6 @@
 # Add Stage 0 Methods to BackendClient
 
-Status: ready-for-agent
+Status: done
 
 Depends on: 04
 
@@ -34,3 +34,7 @@ keeps the calling code in `app.py` pattern-matchable.
 ## Last step
 
 Write an article stub in `articles/00-the-fugitive-moves/` per `docs/agents/articles.md`.
+
+## Comments
+
+2026-06-08 97ac32e — Added CaseCreated, CaseState, TrailGoneCold dataclasses and create_case/get_case/advance_case methods; advance_case returns TrailGoneCold on 409; contract tests via httpx.ASGITransport.

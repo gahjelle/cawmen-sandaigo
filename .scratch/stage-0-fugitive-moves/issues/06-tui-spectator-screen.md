@@ -1,6 +1,6 @@
 # TUI Spectator Screen
 
-Status: ready-for-agent
+Status: done
 
 Depends on: 05
 
@@ -31,3 +31,7 @@ and display "Trail gone cold" when the fugitive escapes.
 ## Last step
 
 Write an article stub in `articles/00-the-fugitive-moves/` per `docs/agents/articles.md`.
+
+## Comments
+
+2026-06-08 — Implemented in 62b0197. Spectator view with location list, In-Game Clock, 2-second tick timer, and "Trail gone cold" on escape. AbstractClient Protocol introduced for testability. Status widget docked to bottom; uvicorn access_log=False to prevent log bleed. Article stub at articles/00-the-fugitive-moves/tui-spectator-screen.md.
