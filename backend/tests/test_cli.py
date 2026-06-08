@@ -16,10 +16,11 @@ def test_serve_runs_uvicorn_on_the_requested_host_and_port(
     """The serve command starts uvicorn on the host and port it is given."""
     captured: dict[str, Any] = {}
 
-    def fake_run(app: object, *, host: str, port: int) -> None:
+    def fake_run(app: object, *, host: str, port: int, access_log: bool) -> None:
         captured["app"] = app
         captured["host"] = host
         captured["port"] = port
+        captured["access_log"] = access_log
 
     monkeypatch.setattr(__main__.uvicorn, "run", fake_run)
 

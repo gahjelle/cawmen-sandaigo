@@ -4,6 +4,7 @@ import pytest
 
 from cawmen_tui import __main__
 from cawmen_tui.app import CawmenApp
+from cawmen_tui.client import BackendClient
 
 
 def test_play_targets_the_backend_at_the_given_api_url(
@@ -13,6 +14,7 @@ def test_play_targets_the_backend_at_the_given_api_url(
     captured: dict[str, str] = {}
 
     def fake_run(self: CawmenApp) -> None:
+        assert isinstance(self._client, BackendClient)
         captured["base_url"] = str(self._client._http.base_url)
 
     monkeypatch.setattr(CawmenApp, "run", fake_run)

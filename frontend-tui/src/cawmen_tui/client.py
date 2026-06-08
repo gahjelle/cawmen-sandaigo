@@ -6,7 +6,7 @@ client's expectations against the live schema.
 """
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
     import httpx
@@ -57,6 +57,22 @@ class CaseState:
 @dataclass(frozen=True)
 class TrailGoneCold:
     """Returned (not raised) when the server signals the fugitive has escaped (409)."""
+
+
+class AbstractClient(Protocol):
+    """Port: any object that can talk to the backend."""
+
+    async def health(self) -> Health:
+        """Fetch the backend's health status."""
+
+    async def create_case(self, scenario: str, seed: str | None = None) -> CaseCreated:
+        """POST /cases — returns case_id and location graph."""
+
+    async def get_case(self, case_id: str) -> CaseState:
+        """GET /cases/{case_id} — returns day and fugitive_location."""
+
+    async def advance_case(self, case_id: str) -> CaseState | TrailGoneCold:
+        """POST /cases/{case_id}/advance — new state, or TrailGoneCold on 409."""
 
 
 class BackendClient:
