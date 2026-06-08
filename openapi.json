@@ -1,6 +1,116 @@
 {
   "components": {
     "schemas": {
+      "CaseResponse": {
+        "additionalProperties": false,
+        "description": "Response for GET /cases/{id} and POST /cases/{id}/advance.",
+        "properties": {
+          "day": {
+            "title": "Day",
+            "type": "integer"
+          },
+          "fugitive_location": {
+            "title": "Fugitive Location",
+            "type": "string"
+          }
+        },
+        "required": [
+          "day",
+          "fugitive_location"
+        ],
+        "title": "CaseResponse",
+        "type": "object"
+      },
+      "ConnectionOut": {
+        "additionalProperties": false,
+        "description": "A connection between two named Locations as returned to clients.",
+        "properties": {
+          "from": {
+            "title": "From",
+            "type": "string"
+          },
+          "to": {
+            "title": "To",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ],
+        "title": "ConnectionOut",
+        "type": "object"
+      },
+      "CreateCaseRequest": {
+        "additionalProperties": false,
+        "description": "Body for POST /cases.",
+        "properties": {
+          "scenario": {
+            "title": "Scenario",
+            "type": "string"
+          },
+          "seed": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seed"
+          }
+        },
+        "required": [
+          "scenario"
+        ],
+        "title": "CreateCaseRequest",
+        "type": "object"
+      },
+      "CreateCaseResponse": {
+        "additionalProperties": false,
+        "description": "Response for POST /cases.",
+        "properties": {
+          "case_id": {
+            "title": "Case Id",
+            "type": "string"
+          },
+          "connections": {
+            "items": {
+              "$ref": "#/components/schemas/ConnectionOut"
+            },
+            "title": "Connections",
+            "type": "array"
+          },
+          "locations": {
+            "items": {
+              "$ref": "#/components/schemas/LocationOut"
+            },
+            "title": "Locations",
+            "type": "array"
+          }
+        },
+        "required": [
+          "case_id",
+          "locations",
+          "connections"
+        ],
+        "title": "CreateCaseResponse",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
       "HealthResponse": {
         "additionalProperties": false,
         "description": "Liveness payload polled by the TUI launcher before it connects (ADR-0007).",
@@ -15,6 +125,79 @@
         ],
         "title": "HealthResponse",
         "type": "object"
+      },
+      "LocationOut": {
+        "additionalProperties": false,
+        "description": "A named Location as returned to clients (Escape Location excluded).",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "LocationOut",
+        "type": "object"
+      },
+      "TrailGoneColdError": {
+        "additionalProperties": false,
+        "description": "409 body returned when the fugitive has already escaped.",
+        "properties": {
+          "detail": {
+            "default": "trail_gone_cold",
+            "title": "Detail",
+            "type": "string"
+          }
+        },
+        "title": "TrailGoneColdError",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
       }
     }
   },
@@ -24,6 +207,132 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/cases": {
+      "post": {
+        "operationId": "create_case_cases_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCaseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateCaseResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Case"
+      }
+    },
+    "/cases/{case_id}": {
+      "get": {
+        "operationId": "get_case_cases__case_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Case"
+      }
+    },
+    "/cases/{case_id}/advance": {
+      "post": {
+        "operationId": "advance_case_cases__case_id__advance_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrailGoneColdError"
+                }
+              }
+            },
+            "description": "Fugitive escaped; trail gone cold"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Advance Case"
+      }
+    },
     "/health": {
       "get": {
         "operationId": "health_health_get",

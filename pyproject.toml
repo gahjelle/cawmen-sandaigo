@@ -26,6 +26,7 @@ testpaths = ["backend/tests", "frontend-tui/tests", "tools/tests"]
 [dependency-groups]
 dev = [
     "httpx>=0.28.1",
+    "ipython>=9.14.1",
     "prek>=0.4.4",
     "pytest>=9.0.3",
     "pytest-asyncio>=1.4.0",

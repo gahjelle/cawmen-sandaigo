@@ -14,7 +14,7 @@ app = App(name="cawmen-backend", help="Cawmen Sandaigo backend.")
 @app.command
 def serve(*, host: str = "127.0.0.1", port: int = 8000) -> None:
     """Run the backend REST API server (ADR-0007: frontends connect over HTTP)."""
-    uvicorn.run(create_app(), host=host, port=port)
+    uvicorn.run(create_app(), host=host, port=port, access_log=False)
 
 
 @app.command
