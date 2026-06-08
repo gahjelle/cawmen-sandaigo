@@ -11,7 +11,13 @@ import httpx
 from textual.app import App, ComposeResult
 from textual.widgets import Static
 
-from cawmen_tui.client import AbstractClient, BackendClient, CaseState, TrailGoneCold
+from cawmen_tui.client import (
+    AbstractClient,
+    BackendClient,
+    CaseState,
+    Location,
+    TrailGoneCold,
+)
 
 if TYPE_CHECKING:
     from textual.timer import Timer
@@ -37,6 +43,7 @@ class CawmenApp(App[None]):
         self._client = client
         self._owned_http = owned_http
         self._case_id: str | None = None
+        self._locations: list[Location] = []
         self._fugitive_location: str | None = None
         self._tick_timer: Timer | None = None
 

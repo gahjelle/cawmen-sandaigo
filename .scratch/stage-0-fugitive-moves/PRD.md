@@ -44,7 +44,7 @@ Advances the In-Game Clock by one day.
 
 **Response**: same shape as `GET /cases/{case_id}`
 
-- If the fugitive has already escaped, returns a 409 with `{ "detail": "trail_gone_cold" }`
+- If advancing would move the fugitive to the Escape Location, returns a 409 with `{ "detail": "trail_gone_cold" }` instead of advancing
 
 ## Seed splitter (ADR-0010)
 

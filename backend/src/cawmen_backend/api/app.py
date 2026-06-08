@@ -3,7 +3,7 @@
 import random
 import uuid
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from fastapi import FastAPI, HTTPException
 from pydantic import Field
@@ -66,6 +66,12 @@ class CaseResponse(FrozenModel):
     fugitive_location: str
 
 
+class TrailGoneColdError(FrozenModel):
+    """409 body returned when the fugitive has already escaped."""
+
+    detail: str = "trail_gone_cold"
+
+
 def create_app(scenarios_dir: Path = Path("scenarios")) -> FastAPI:
     """Build the FastAPI app exposing the Cawmen Sandaigo REST API."""
     app = FastAPI(title="Cawmen Sandaigo", version="0.0.0")
@@ -96,7 +102,7 @@ def create_app(scenarios_dir: Path = Path("scenarios")) -> FastAPI:
         connections = [
             ConnectionOut.model_validate({"from": c.from_, "to": c.to})
             for c in graph.connections
-            if c.to != escape_id
+            if escape_id not in (c.to, c.from_)
         ]
         return CreateCaseResponse(
             case_id=seed, locations=locations, connections=connections
@@ -112,7 +118,14 @@ def create_app(scenarios_dir: Path = Path("scenarios")) -> FastAPI:
             day=state.day, fugitive_location=fugitive_location(route, state)
         )
 
-    @app.post("/cases/{case_id}/advance")
+    _advance_responses: dict[int | str, dict[str, Any]] = {
+        409: {
+            "model": TrailGoneColdError,
+            "description": "Fugitive escaped; trail gone cold",
+        },
+    }
+
+    @app.post("/cases/{case_id}/advance", responses=_advance_responses)
     def advance_case(case_id: str) -> CaseResponse:
         state = store.load(case_id)
         if state is None:

@@ -37,10 +37,10 @@ async def test_post_cases_returns_case_id_and_named_locations(
     assert {"id": "paris", "name": "Paris"} in data["locations"]
 
 
-async def test_post_cases_excludes_escape_location_and_its_connection(
+async def test_post_cases_excludes_escape_location_and_its_connections(
     client: httpx.AsyncClient,
 ) -> None:
-    """POST /cases omits the Escape Location and connections leading to it."""
+    """POST /cases omits the Escape Location and all connections involving it."""
     response = await client.post(
         "/cases", json={"scenario": "grand-tour", "seed": "s2"}
     )
@@ -48,6 +48,7 @@ async def test_post_cases_excludes_escape_location_and_its_connection(
     data = response.json()
     assert all(loc["id"] != "escape" for loc in data["locations"])
     assert all(c["to"] != "escape" for c in data["connections"])
+    assert all(c["from"] != "escape" for c in data["connections"])
 
 
 async def test_post_cases_same_seed_produces_same_result(

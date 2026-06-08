@@ -51,3 +51,7 @@ escape = true
 [[connections]]
 from = "madrid"
 to = "escape"
+
+[[connections]]
+from = "escape"
+to = "madrid"

@@ -146,6 +146,19 @@
         "title": "LocationOut",
         "type": "object"
       },
+      "TrailGoneColdError": {
+        "additionalProperties": false,
+        "description": "409 body returned when the fugitive has already escaped.",
+        "properties": {
+          "detail": {
+            "default": "trail_gone_cold",
+            "title": "Detail",
+            "type": "string"
+          }
+        },
+        "title": "TrailGoneColdError",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -295,6 +308,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrailGoneColdError"
+                }
+              }
+            },
+            "description": "Fugitive escaped; trail gone cold"
           },
           "422": {
             "content": {
