@@ -12,4 +12,4 @@ The function accepts a `random.Random` directly so callers control seeding. The 
 
 ## The walk algorithm
 
-The route is a deterministic walk: from the current Location, follow the first outgoing connection (in the order connections are authored in `graph.toml`) that leads to an unvisited non-escape Location. The starting Location is the only random choice — `rng` is consumed exactly once. For the grand-tour ring this always produces a full traversal, because every Location has exactly one outgoing non-escape edge.
+The route is a deterministic walk: from the current Location, follow the first outgoing connection (in the order connections are authored in `graph.toml`) that leads to an unvisited non-escape Location. The starting Location is the only random choice — `rng` is consumed exactly once. For the minimal ring this always produces a full traversal, because every Location has exactly one outgoing non-escape edge.

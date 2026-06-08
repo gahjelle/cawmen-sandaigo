@@ -25,7 +25,7 @@ async def test_create_case_returns_case_id_and_location_graph(
     """create_case maps POST /cases to a typed CaseCreated."""
     client = BackendClient(backend_http)
 
-    result = await client.create_case(scenario="grand-tour", seed="c1")
+    result = await client.create_case(scenario="minimal", seed="c1")
 
     assert isinstance(result, CaseCreated)
     assert result.case_id == "c1"
@@ -40,7 +40,7 @@ async def test_get_case_returns_day_and_fugitive_location(
 ) -> None:
     """get_case maps GET /cases/{id} to a typed CaseState."""
     client = BackendClient(backend_http)
-    await client.create_case(scenario="grand-tour", seed="c2")
+    await client.create_case(scenario="minimal", seed="c2")
 
     result = await client.get_case("c2")
 
@@ -54,7 +54,7 @@ async def test_advance_case_returns_incremented_day(
 ) -> None:
     """advance_case maps POST /cases/{id}/advance to a typed CaseState."""
     client = BackendClient(backend_http)
-    await client.create_case(scenario="grand-tour", seed="c3")
+    await client.create_case(scenario="minimal", seed="c3")
 
     result = await client.advance_case("c3")
 
@@ -68,7 +68,7 @@ async def test_advance_case_returns_trail_gone_cold_on_escape(
 ) -> None:
     """advance_case returns TrailGoneCold (not raises) when the fugitive escapes."""
     client = BackendClient(backend_http)
-    await client.create_case(scenario="grand-tour", seed="c4")
+    await client.create_case(scenario="minimal", seed="c4")
     for _ in range(3):
         await client.advance_case("c4")
 

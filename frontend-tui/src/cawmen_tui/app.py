@@ -65,7 +65,7 @@ class CawmenApp(App[None]):
         self.query_one("#status", Static).update(f"Backend: {health.status}")
 
         case = await self._client.create_case(
-            scenario="grand-tour", seed=str(uuid.uuid4())
+            scenario="minimal", seed=str(uuid.uuid4())
         )
         self._case_id = case.case_id
         self._locations = case.locations

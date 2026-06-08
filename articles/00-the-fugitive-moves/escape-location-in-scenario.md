@@ -1,6 +1,6 @@
 # Escape Location in the Scenario Graph
 
-The `grand-tour` scenario has four named locations the player sees — Paris, Berlin, Rome, Madrid — plus a fifth that only the game knows about: the Escape Location.
+The `minimal` scenario has four named locations the player sees — Paris, Berlin, Rome, Madrid — plus a fifth that only the game knows about: the Escape Location.
 
 ## What was built
 

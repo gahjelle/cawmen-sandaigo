@@ -12,7 +12,7 @@ holds Case state for the lifetime of the process.
 
 ### `POST /cases`
 
-Body: `{ "scenario": "grand-tour", "seed": "<uuid>" }` (seed optional; defaults to `str(uuid.uuid4())`)
+Body: `{ "scenario": "minimal", "seed": "<uuid>" }` (seed optional; defaults to `str(uuid.uuid4())`)
 
 1. Load the `LocationGraph` from the Scenario file via `load_location_graph`
 2. Derive the route RNG: `random.Random(derive_seed(seed, "route"))`

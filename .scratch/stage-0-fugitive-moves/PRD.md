@@ -8,7 +8,7 @@ its route in the terminal as the In-Game Clock advances automatically.
 
 ## What this stage delivers
 
-- The `grand-tour` Scenario extended with a hidden Escape Location
+- The `minimal` Scenario extended with a hidden Escape Location
 - A seed splitter (`derive_seed`) so each randomized concern gets its own independent RNG stream
 - A route generator that produces a seeded walk through the Location Graph
 - Three REST endpoints exposing Case state and clock advancement
@@ -25,7 +25,7 @@ its route in the terminal as the In-Game Clock advances automatically.
 
 ### `POST /cases`
 
-**Body**: `{ "scenario": "grand-tour", "seed": "<uuid>" }` (seed is optional; defaults to a random UUID)
+**Body**: `{ "scenario": "minimal", "seed": "<uuid>" }` (seed is optional; defaults to a random UUID)
 
 **Response**: `{ "case_id": "<uuid>", "locations": [{ "id": "paris", "name": "Paris" }, ...], "connections": [{ "from": "paris", "to": "berlin" }, ...] }`
 
@@ -69,7 +69,7 @@ The resulting `FugitiveRoute` has `len(non_escape_locations) + 1` entries.
 
 ## TUI behaviour
 
-- On launch: `POST /cases` with `scenario="grand-tour"` and a fresh UUID seed
+- On launch: `POST /cases` with `scenario="minimal"` and a fresh UUID seed
 - Renders: In-Game Clock (top) + location list (body, fugitive's current location highlighted)
 - Every 2 seconds: `POST /cases/{id}/advance`; re-render with the new state
 - On escape: stop ticking, display "Trail gone cold" in place of the location list

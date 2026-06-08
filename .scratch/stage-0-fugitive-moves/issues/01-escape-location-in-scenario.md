@@ -1,8 +1,8 @@
-# Add Escape Location to grand-tour Scenario
+# Add Escape Location to minimal Scenario
 
 Status: done
 
-Add a hidden Escape Location to `scenarios/grand-tour/graph.toml`. It must be defined
+Add a hidden Escape Location to `scenarios/minimal/graph.toml`. It must be defined
 in the file (so `load_location_graph` loads it) but distinguished from the named
 Locations so the API can exclude it from the location list it returns to clients.
 

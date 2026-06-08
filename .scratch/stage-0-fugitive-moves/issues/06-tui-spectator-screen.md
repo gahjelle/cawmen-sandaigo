@@ -10,7 +10,7 @@ and display "Trail gone cold" when the fugitive escapes.
 
 ## Behaviour
 
-1. **On mount**: call `create_case(scenario="grand-tour")` with a fresh `uuid.uuid4()` seed;
+1. **On mount**: call `create_case(scenario="minimal")` with a fresh `uuid.uuid4()` seed;
    store the returned `case_id` and location list
 2. **Render**: In-Game Clock at the top (use `TemplatedTextProvider.clock(day=..., language="en")`);
    below it, the list of named Locations — the fugitive's current location highlighted

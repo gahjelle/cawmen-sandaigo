@@ -4,7 +4,7 @@
 # The Fugitive Route is not authored — it is generated deterministically from the
 # Case Seed over this graph (a trivial walk at Stage 0).
 
-name = "grand-tour"
+name = "minimal"
 
 [[locations]]
 id = "paris"
