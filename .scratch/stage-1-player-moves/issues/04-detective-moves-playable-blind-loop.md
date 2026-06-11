@@ -1,6 +1,6 @@
 # The detective Moves: the playable blind loop
 
-Status: ready-for-agent
+Status: done
 
 ## Parent
 

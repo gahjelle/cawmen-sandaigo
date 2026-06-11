@@ -70,7 +70,12 @@ def test_all_non_escape_locations_appear_exactly_once() -> None:
 def test_has_escaped_is_true_at_end_of_route() -> None:
     """has_escaped returns True when the clock reaches the Escape Location."""
     route = generate_route(GRAPH, random.Random(0))  # noqa: S311
-    final_day = CaseState(day=len(route.locations))
+    final_day = CaseState(
+        day=len(route.locations) - 1,
+        seed="s",
+        detective_location="paris",
+        status="in_progress",
+    )
 
     assert has_escaped(route, final_day)
 
