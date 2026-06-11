@@ -5,7 +5,7 @@ TUI consumes the same public contract any client would, with contract tests guar
 client's expectations against the live schema.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
@@ -27,14 +27,7 @@ class Location:
 
     id: str
     name: str
-
-
-@dataclass(frozen=True)
-class Connection:
-    """A directed edge between two named locations."""
-
-    from_: str
-    to: str
+    neighbors: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -43,7 +36,6 @@ class CaseCreated:
 
     case_id: str
     locations: list[Location]
-    connections: list[Connection]
 
 
 @dataclass(frozen=True)
@@ -97,17 +89,10 @@ class BackendClient:
         response.raise_for_status()
         data = response.json()
         locations = [
-            Location(id=loc["id"], name=loc["name"]) for loc in data["locations"]
+            Location(id=loc["id"], name=loc["name"], neighbors=loc["neighbors"])
+            for loc in data["locations"]
         ]
-        connections = [
-            Connection(from_=conn["from"], to=conn["to"])
-            for conn in data["connections"]
-        ]
-        return CaseCreated(
-            case_id=data["case_id"],
-            locations=locations,
-            connections=connections,
-        )
+        return CaseCreated(case_id=data["case_id"], locations=locations)
 
     async def get_case(self, case_id: str) -> CaseState:
         """GET /cases/{case_id} — returns day and fugitive_location."""

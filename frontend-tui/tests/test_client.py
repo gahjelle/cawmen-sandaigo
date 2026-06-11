@@ -7,6 +7,8 @@ from cawmen_tui.client import BackendClient, CaseCreated, CaseState, TrailGoneCo
 if TYPE_CHECKING:
     import httpx
 
+PRISM_LOCATIONS = {"paris", "rome", "madrid", "berlin", "london", "oslo"}
+
 
 async def test_health_reports_the_backend_status(
     backend_http: httpx.AsyncClient,
@@ -22,17 +24,29 @@ async def test_health_reports_the_backend_status(
 async def test_create_case_returns_case_id_and_location_graph(
     backend_http: httpx.AsyncClient,
 ) -> None:
-    """create_case maps POST /cases to a typed CaseCreated."""
+    """create_case maps POST /cases to a typed CaseCreated with neighbors."""
     client = BackendClient(backend_http)
 
     result = await client.create_case(scenario="minimal", seed="c1")
 
     assert isinstance(result, CaseCreated)
     assert result.case_id == "c1"
-    assert len(result.locations) == 4
+    assert len(result.locations) == 6
     assert any(loc.id == "paris" for loc in result.locations)
     assert any(loc.name == "Paris" for loc in result.locations)
-    assert len(result.connections) > 0
+    paris = next(loc for loc in result.locations if loc.id == "paris")
+    assert set(paris.neighbors) == {"rome", "madrid", "berlin"}
+
+
+async def test_create_case_has_no_connections(
+    backend_http: httpx.AsyncClient,
+) -> None:
+    """create_case result no longer carries a connections list."""
+    client = BackendClient(backend_http)
+
+    result = await client.create_case(scenario="minimal", seed="c1b")
+
+    assert not hasattr(result, "connections")
 
 
 async def test_get_case_returns_day_and_fugitive_location(
@@ -46,7 +60,7 @@ async def test_get_case_returns_day_and_fugitive_location(
 
     assert isinstance(result, CaseState)
     assert result.day == 1
-    assert result.fugitive_location in {"paris", "berlin", "rome", "madrid"}
+    assert result.fugitive_location in PRISM_LOCATIONS
 
 
 async def test_advance_case_returns_incremented_day(
@@ -60,7 +74,7 @@ async def test_advance_case_returns_incremented_day(
 
     assert isinstance(result, CaseState)
     assert result.day == 2
-    assert result.fugitive_location in {"paris", "berlin", "rome", "madrid"}
+    assert result.fugitive_location in PRISM_LOCATIONS
 
 
 async def test_advance_case_returns_trail_gone_cold_on_escape(
@@ -69,9 +83,10 @@ async def test_advance_case_returns_trail_gone_cold_on_escape(
     """advance_case returns TrailGoneCold (not raises) when the fugitive escapes."""
     client = BackendClient(backend_http)
     await client.create_case(scenario="minimal", seed="c4")
-    for _ in range(3):
-        await client.advance_case("c4")
-
-    result = await client.advance_case("c4")
-
-    assert isinstance(result, TrailGoneCold)
+    result = None
+    for _ in range(20):
+        result = await client.advance_case("c4")
+        if isinstance(result, TrailGoneCold):
+            return
+    msg = "Fugitive never escaped after 20 advances"
+    raise AssertionError(msg)

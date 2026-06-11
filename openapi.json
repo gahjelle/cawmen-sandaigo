@@ -21,26 +21,6 @@
         "title": "CaseResponse",
         "type": "object"
       },
-      "ConnectionOut": {
-        "additionalProperties": false,
-        "description": "A connection between two named Locations as returned to clients.",
-        "properties": {
-          "from": {
-            "title": "From",
-            "type": "string"
-          },
-          "to": {
-            "title": "To",
-            "type": "string"
-          }
-        },
-        "required": [
-          "from",
-          "to"
-        ],
-        "title": "ConnectionOut",
-        "type": "object"
-      },
       "CreateCaseRequest": {
         "additionalProperties": false,
         "description": "Body for POST /cases.",
@@ -75,13 +55,6 @@
             "title": "Case Id",
             "type": "string"
           },
-          "connections": {
-            "items": {
-              "$ref": "#/components/schemas/ConnectionOut"
-            },
-            "title": "Connections",
-            "type": "array"
-          },
           "locations": {
             "items": {
               "$ref": "#/components/schemas/LocationOut"
@@ -92,8 +65,7 @@
         },
         "required": [
           "case_id",
-          "locations",
-          "connections"
+          "locations"
         ],
         "title": "CreateCaseResponse",
         "type": "object"
@@ -137,6 +109,13 @@
           "name": {
             "title": "Name",
             "type": "string"
+          },
+          "neighbors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Neighbors",
+            "type": "array"
           }
         },
         "required": [

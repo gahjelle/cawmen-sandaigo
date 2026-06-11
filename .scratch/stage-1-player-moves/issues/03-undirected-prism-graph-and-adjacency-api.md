@@ -1,6 +1,6 @@
 # Undirected prism graph, self-avoiding route gen, adjacency API
 
-Status: ready-for-agent
+Status: closed
 
 ## Parent
 
@@ -31,15 +31,15 @@ adjacency to clients — while keeping the existing spectator demoable on the ne
 
 ## Acceptance criteria
 
-- [ ] `minimal` is the 6-Location prism authored as undirected pairs; no `from`/`to`
-- [ ] The loader exposes symmetric adjacency; the Escape Location has no neighbours
-- [ ] Route generation is a seeded self-avoiding walk: same seed → same route, every route
+- [x] `minimal` is the 6-Location prism authored as undirected pairs; no `from`/`to`
+- [x] The loader exposes symmetric adjacency; the Escape Location has no neighbours
+- [x] Route generation is a seeded self-avoiding walk: same seed → same route, every route
       is a valid adjacent path, no Location repeats, ends with the escape terminus, never
       errors on the prism
-- [ ] `POST /cases` returns per-Location `{id, name, neighbors}` with no escape and no
+- [x] `POST /cases` returns per-Location `{id, name, neighbors}` with no escape and no
       `connections` field
-- [ ] TUI renders the prism and still spectates; client no longer has a `Connection` type
-- [ ] `openapi.json` is current and `just check` passes
+- [x] TUI renders the prism and still spectates; client no longer has a `Connection` type
+- [x] `openapi.json` is current and `just check` passes
 
 ## Blocked by
 

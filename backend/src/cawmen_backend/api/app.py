@@ -42,13 +42,7 @@ class LocationOut(FrozenModel):
 
     id: str
     name: str
-
-
-class ConnectionOut(FrozenModel):
-    """A connection between two named Locations as returned to clients."""
-
-    from_: str = Field(alias="from")
-    to: str
+    neighbors: list[str] = Field(default_factory=list)
 
 
 class CreateCaseResponse(FrozenModel):
@@ -56,7 +50,6 @@ class CreateCaseResponse(FrozenModel):
 
     case_id: str
     locations: list[LocationOut]
-    connections: list[ConnectionOut]
 
 
 class CaseResponse(FrozenModel):
@@ -93,20 +86,16 @@ def create_app(scenarios_dir: Path = Path("scenarios")) -> FastAPI:
         graph = load_location_graph(scenarios_dir / body.scenario / "graph.toml")
         store.save(seed, CaseState(day=1))
         case_scenarios[seed] = body.scenario
-        escape_id = next(loc.id for loc in graph.locations if loc.escape)
         locations = [
-            LocationOut(id=loc.id, name=loc.name)
+            LocationOut(
+                id=loc.id,
+                name=loc.name,
+                neighbors=graph.neighbors(loc.id),
+            )
             for loc in graph.locations
             if not loc.escape
         ]
-        connections = [
-            ConnectionOut.model_validate({"from": c.from_, "to": c.to})
-            for c in graph.connections
-            if escape_id not in (c.to, c.from_)
-        ]
-        return CreateCaseResponse(
-            case_id=seed, locations=locations, connections=connections
-        )
+        return CreateCaseResponse(case_id=seed, locations=locations)
 
     @app.get("/cases/{case_id}")
     def get_case(case_id: str) -> CaseResponse:

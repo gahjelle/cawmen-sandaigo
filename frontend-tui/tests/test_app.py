@@ -51,11 +51,7 @@ class FakeClient:
         seed: str | None = None,  # noqa: ARG002
     ) -> CaseCreated:
         """Return a fixed case with the configured locations."""
-        return CaseCreated(
-            case_id="test-case",
-            locations=self.locations,
-            connections=[],
-        )
+        return CaseCreated(case_id="test-case", locations=self.locations)
 
     async def get_case(self, case_id: str) -> CaseState:  # noqa: ARG002
         """Return the configured initial state."""
