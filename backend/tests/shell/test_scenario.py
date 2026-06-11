@@ -13,9 +13,11 @@ def test_loads_the_authored_locations_in_order() -> None:
 
     assert [location.id for location in graph.locations if not location.escape] == [
         "paris",
-        "berlin",
         "rome",
         "madrid",
+        "berlin",
+        "london",
+        "oslo",
     ]
 
 
@@ -27,8 +29,18 @@ def test_escape_location_is_distinguished() -> None:
     assert escape.id == "escape"
 
 
-def test_loads_connections_between_locations() -> None:
-    """The loader reads the travel connections between Locations."""
+def test_loads_undirected_connections_and_expands_symmetrically() -> None:
+    """The loader reads undirected pairs and neighbors() expands them symmetrically."""
     graph = load_location_graph(SCENARIOS / "minimal" / "graph.toml")
 
-    assert ("paris", "berlin") in [(c.from_, c.to) for c in graph.connections]
+    assert "rome" in graph.neighbors("paris")
+    assert "paris" in graph.neighbors("rome")
+    assert "oslo" in graph.neighbors("paris")
+    assert "paris" in graph.neighbors("oslo")
+
+
+def test_escape_location_has_no_neighbours() -> None:
+    """The Escape Location is not an endpoint of any authored connection."""
+    graph = load_location_graph(SCENARIOS / "minimal" / "graph.toml")
+
+    assert graph.neighbors("escape") == []

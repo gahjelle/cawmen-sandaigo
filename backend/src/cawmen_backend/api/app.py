@@ -9,10 +9,10 @@ from fastapi import FastAPI, HTTPException
 from pydantic import Field
 
 from cawmen_backend.core.chase import (
+    CaseOverError,
     CaseState,
-    advance_clock,
-    fugitive_location,
-    has_escaped,
+    IllegalMoveError,
+    apply_move,
 )
 from cawmen_backend.core.route import generate_route
 from cawmen_backend.core.seed import derive_seed
@@ -21,7 +21,8 @@ from cawmen_backend.shell.scenario import load_location_graph
 from cawmen_backend.shell.state_store import InMemoryStateStore
 
 if TYPE_CHECKING:
-    from cawmen_backend.core.chase import FugitiveRoute
+    from cawmen_backend.core.location import LocationGraph
+    from cawmen_backend.core.route import FugitiveRoute
 
 
 class HealthResponse(FrozenModel):
@@ -42,46 +43,67 @@ class LocationOut(FrozenModel):
 
     id: str
     name: str
-
-
-class ConnectionOut(FrozenModel):
-    """A connection between two named Locations as returned to clients."""
-
-    from_: str = Field(alias="from")
-    to: str
+    neighbors: list[str] = Field(default_factory=list)
 
 
 class CreateCaseResponse(FrozenModel):
     """Response for POST /cases."""
 
     case_id: str
+    detective_location: str
     locations: list[LocationOut]
-    connections: list[ConnectionOut]
 
 
 class CaseResponse(FrozenModel):
-    """Response for GET /cases/{id} and POST /cases/{id}/advance."""
+    """Blind in-progress response for GET /cases/{id} and POST /cases/{id}/move."""
 
     day: int
-    fugitive_location: str
+    detective_location: str
+    status: str
 
 
-class TrailGoneColdError(FrozenModel):
-    """409 body returned when the fugitive has already escaped."""
+class TerminalCaseResponse(FrozenModel):
+    """Terminal response for POST /cases/{id}/move when the case is over."""
 
-    detail: str = "trail_gone_cold"
+    day: int
+    detective_location: str
+    status: str
+    fugitive_route: list[str]
+
+
+class MoveRequest(FrozenModel):
+    """Body for POST /cases/{id}/move."""
+
+    target: str
+
+
+class IllegalMoveErrorBody(FrozenModel):
+    """400 body returned for non-adjacent / self / unknown move targets."""
+
+    detail: str = "illegal_move"
+
+
+class CaseOverErrorBody(FrozenModel):
+    """409 body returned when the Case is already terminal."""
+
+    detail: str = "case_over"
+
+
+def _load_graph(scenarios_dir: Path, scenario: str) -> LocationGraph:
+    return load_location_graph(scenarios_dir / scenario / "graph.toml")
+
+
+def _build_route(scenarios_dir: Path, scenario: str, seed: str) -> FugitiveRoute:
+    graph = _load_graph(scenarios_dir, scenario)
+    rng = random.Random(derive_seed(seed, "route"))  # noqa: S311
+    return generate_route(graph, rng)
 
 
 def create_app(scenarios_dir: Path = Path("scenarios")) -> FastAPI:
     """Build the FastAPI app exposing the Cawmen Sandaigo REST API."""
     app = FastAPI(title="Cawmen Sandaigo", version="0.0.0")
     store = InMemoryStateStore()
-    case_scenarios: dict[str, str] = {}
-
-    def _reconstruct_route(case_id: str, scenario: str) -> FugitiveRoute:
-        graph = load_location_graph(scenarios_dir / scenario / "graph.toml")
-        rng = random.Random(derive_seed(case_id, "route"))  # noqa: S311
-        return generate_route(graph, rng)
+    case_meta: dict[str, tuple[str, str]] = {}
 
     @app.get("/health")
     def health() -> HealthResponse:
@@ -90,22 +112,35 @@ def create_app(scenarios_dir: Path = Path("scenarios")) -> FastAPI:
     @app.post("/cases")
     def create_case(body: CreateCaseRequest) -> CreateCaseResponse:
         seed = body.seed or str(uuid.uuid4())
-        graph = load_location_graph(scenarios_dir / body.scenario / "graph.toml")
-        store.save(seed, CaseState(day=1))
-        case_scenarios[seed] = body.scenario
-        escape_id = next(loc.id for loc in graph.locations if loc.escape)
+        case_id = str(uuid.uuid4())
+        graph = _load_graph(scenarios_dir, body.scenario)
+        route = _build_route(scenarios_dir, body.scenario, seed)
+        detective_start = route.locations[0]
+
+        store.save(
+            case_id,
+            CaseState(
+                day=1,
+                seed=seed,
+                detective_location=detective_start,
+                status="in_progress",
+            ),
+        )
+        case_meta[case_id] = (body.scenario, seed)
+
         locations = [
-            LocationOut(id=loc.id, name=loc.name)
+            LocationOut(
+                id=loc.id,
+                name=loc.name,
+                neighbors=[n for n in graph.neighbors(loc.id) if n != "escape"],
+            )
             for loc in graph.locations
             if not loc.escape
         ]
-        connections = [
-            ConnectionOut.model_validate({"from": c.from_, "to": c.to})
-            for c in graph.connections
-            if escape_id not in (c.to, c.from_)
-        ]
         return CreateCaseResponse(
-            case_id=seed, locations=locations, connections=connections
+            case_id=case_id,
+            detective_location=detective_start,
+            locations=locations,
         )
 
     @app.get("/cases/{case_id}")
@@ -113,31 +148,50 @@ def create_app(scenarios_dir: Path = Path("scenarios")) -> FastAPI:
         state = store.load(case_id)
         if state is None:
             raise HTTPException(status_code=404)
-        route = _reconstruct_route(case_id, case_scenarios[case_id])
         return CaseResponse(
-            day=state.day, fugitive_location=fugitive_location(route, state)
+            day=state.day,
+            detective_location=state.detective_location,
+            status=state.status,
         )
 
-    _advance_responses: dict[int | str, dict[str, Any]] = {
-        409: {
-            "model": TrailGoneColdError,
-            "description": "Fugitive escaped; trail gone cold",
-        },
+    _move_responses: dict[int | str, dict[str, Any]] = {
+        400: {"model": IllegalMoveErrorBody, "description": "Illegal move target"},
+        409: {"model": CaseOverErrorBody, "description": "Case already finished"},
     }
 
-    @app.post("/cases/{case_id}/advance", responses=_advance_responses)
-    def advance_case(case_id: str) -> CaseResponse:
+    @app.post("/cases/{case_id}/move", responses=_move_responses)
+    def move_case(
+        case_id: str, body: MoveRequest
+    ) -> CaseResponse | TerminalCaseResponse:
         state = store.load(case_id)
-        if state is None:
+        meta = case_meta.get(case_id)
+        if state is None or meta is None:
             raise HTTPException(status_code=404)
-        route = _reconstruct_route(case_id, case_scenarios[case_id])
-        new_state = advance_clock(state)
-        if has_escaped(route, new_state):
-            raise HTTPException(status_code=409, detail="trail_gone_cold")
+
+        scenario, seed = meta
+        graph = _load_graph(scenarios_dir, scenario)
+        try:
+            new_state, outcome = apply_move(graph, state, body.target)
+        except CaseOverError as exc:
+            raise HTTPException(status_code=409, detail="case_over") from exc
+        except IllegalMoveError as exc:
+            raise HTTPException(status_code=400, detail="illegal_move") from exc
+
         store.save(case_id, new_state)
+
+        if outcome in {"won", "lost"}:
+            route = _build_route(scenarios_dir, scenario, seed)
+            return TerminalCaseResponse(
+                day=new_state.day,
+                detective_location=new_state.detective_location,
+                status=outcome,
+                fugitive_route=route.locations,
+            )
+
         return CaseResponse(
             day=new_state.day,
-            fugitive_location=fugitive_location(route, new_state),
+            detective_location=new_state.detective_location,
+            status=outcome,
         )
 
     return app

@@ -4,9 +4,9 @@ A geography and detective game where you play a detective chasing a fugitive acr
 
 ## What the game looks like right now
 
-The current build lets you watch a case unfold in the terminal. A fugitive is assigned a route through a handful of European cities — Paris, Berlin, Rome, Madrid — and you can see their position update in real time as the in-game clock advances. The backend runs all the game logic and exposes a REST API; the terminal client connects to it and renders the live state.
+The current build is a playable detective chase in the terminal. A fugitive is assigned a secret route through a handful of European cities and starts moving the moment the case opens. You play the detective: each turn you pick an adjacent city to travel to, trying to be in the same place as the fugitive before they reach the escape location and the trail goes cold.
 
-It's a spectator view at this stage: you watch the chase happen rather than making decisions yourself. The plumbing — case creation, route generation, live tracking — is all wired up and working.
+The backend runs all the game logic and exposes a REST API; the terminal client connects to it, shows your current location and neighbors, and accepts your move. When the case ends — win or lose — the full fugitive route is revealed so you can see where they went.
 
 ## Requirements
 

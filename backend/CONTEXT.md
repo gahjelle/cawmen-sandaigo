@@ -28,8 +28,16 @@ A named individual present at a Location — most are innocent bystanders or wit
 _Avoid_: NPC, character, contact
 
 **In-Game Clock**:
-A clock visible to the player that advances with each action taken — gives temporal context to Clue staleness ("seen two days ago") without revealing the Case deadline explicitly.
+A clock visible to the player, tracking both day and hour (e.g. "Monday 14:00"). The detective's actions consume hours within a day; once the day is spent the clock rolls over, the detective rests, and the fugitive relocates overnight. Gives temporal context to Clue staleness ("seen two days ago") without revealing the Case deadline explicitly.
 _Avoid_: Timer, countdown, turn counter
+
+**Action Cost**:
+The hours an action removes from the detective's day — Move scales with the distance travelled, Interview costs roughly an hour. The central tension: information-gathering early in a Case is expensive enough that the fugitive pulls ahead, while a well-informed detective later spends fewer hours and can close the gap. Each day also reserves a fixed block of hours for the detective to rest.
+_Avoid_: Time cost, action points, turn budget
+
+**Day**:
+One tick of the fugitive's movement and the unit of the Fugitive Route — the fugitive occupies exactly one Location per day, travelling between them overnight. The detective may take several actions within a day before the clock rolls to the next.
+_Avoid_: Turn, round, step
 
 ## Actions
 
@@ -54,6 +62,10 @@ _Avoid_: Accuse, catch, apprehend
 **Case**:
 A single playthrough — begins when a crime is committed and a fugitive flees, ends when the detective either arrests the fugitive or exhausts their leads.
 _Avoid_: Mission, game, run
+
+**Case Outcome**:
+The terminal status of a Case: `won` when the detective catches the fugitive (co-location at Stage 1; a correct Arrest from Stage 3 on), or `lost` when the fugitive reaches the Escape Location. An in-progress Case has no outcome yet. Losing is a normal end state, not an error. On any outcome the full Fugitive Route is revealed so the player can replay the chase.
+_Avoid_: Win/lose flag, game over, result code
 
 **Crime**:
 The act that opens a Case — AI-generated, thematically matched to the Fugitive, and mechanically relevant as a soft filter: the Crime type hints at the Fugitive's motive and can be used to narrow the Suspect roster in the Dossier.

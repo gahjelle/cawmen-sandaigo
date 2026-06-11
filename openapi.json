@@ -1,44 +1,42 @@
 {
   "components": {
     "schemas": {
+      "CaseOverErrorBody": {
+        "additionalProperties": false,
+        "description": "409 body returned when the Case is already terminal.",
+        "properties": {
+          "detail": {
+            "default": "case_over",
+            "title": "Detail",
+            "type": "string"
+          }
+        },
+        "title": "CaseOverErrorBody",
+        "type": "object"
+      },
       "CaseResponse": {
         "additionalProperties": false,
-        "description": "Response for GET /cases/{id} and POST /cases/{id}/advance.",
+        "description": "Blind in-progress response for GET /cases/{id} and POST /cases/{id}/move.",
         "properties": {
           "day": {
             "title": "Day",
             "type": "integer"
           },
-          "fugitive_location": {
-            "title": "Fugitive Location",
+          "detective_location": {
+            "title": "Detective Location",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
             "type": "string"
           }
         },
         "required": [
           "day",
-          "fugitive_location"
+          "detective_location",
+          "status"
         ],
         "title": "CaseResponse",
-        "type": "object"
-      },
-      "ConnectionOut": {
-        "additionalProperties": false,
-        "description": "A connection between two named Locations as returned to clients.",
-        "properties": {
-          "from": {
-            "title": "From",
-            "type": "string"
-          },
-          "to": {
-            "title": "To",
-            "type": "string"
-          }
-        },
-        "required": [
-          "from",
-          "to"
-        ],
-        "title": "ConnectionOut",
         "type": "object"
       },
       "CreateCaseRequest": {
@@ -75,12 +73,9 @@
             "title": "Case Id",
             "type": "string"
           },
-          "connections": {
-            "items": {
-              "$ref": "#/components/schemas/ConnectionOut"
-            },
-            "title": "Connections",
-            "type": "array"
+          "detective_location": {
+            "title": "Detective Location",
+            "type": "string"
           },
           "locations": {
             "items": {
@@ -92,8 +87,8 @@
         },
         "required": [
           "case_id",
-          "locations",
-          "connections"
+          "detective_location",
+          "locations"
         ],
         "title": "CreateCaseResponse",
         "type": "object"
@@ -126,6 +121,19 @@
         "title": "HealthResponse",
         "type": "object"
       },
+      "IllegalMoveErrorBody": {
+        "additionalProperties": false,
+        "description": "400 body returned for non-adjacent / self / unknown move targets.",
+        "properties": {
+          "detail": {
+            "default": "illegal_move",
+            "title": "Detail",
+            "type": "string"
+          }
+        },
+        "title": "IllegalMoveErrorBody",
+        "type": "object"
+      },
       "LocationOut": {
         "additionalProperties": false,
         "description": "A named Location as returned to clients (Escape Location excluded).",
@@ -137,6 +145,13 @@
           "name": {
             "title": "Name",
             "type": "string"
+          },
+          "neighbors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Neighbors",
+            "type": "array"
           }
         },
         "required": [
@@ -146,17 +161,52 @@
         "title": "LocationOut",
         "type": "object"
       },
-      "TrailGoneColdError": {
+      "MoveRequest": {
         "additionalProperties": false,
-        "description": "409 body returned when the fugitive has already escaped.",
+        "description": "Body for POST /cases/{id}/move.",
         "properties": {
-          "detail": {
-            "default": "trail_gone_cold",
-            "title": "Detail",
+          "target": {
+            "title": "Target",
             "type": "string"
           }
         },
-        "title": "TrailGoneColdError",
+        "required": [
+          "target"
+        ],
+        "title": "MoveRequest",
+        "type": "object"
+      },
+      "TerminalCaseResponse": {
+        "additionalProperties": false,
+        "description": "Terminal response for POST /cases/{id}/move when the case is over.",
+        "properties": {
+          "day": {
+            "title": "Day",
+            "type": "integer"
+          },
+          "detective_location": {
+            "title": "Detective Location",
+            "type": "string"
+          },
+          "fugitive_route": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Fugitive Route",
+            "type": "array"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "day",
+          "detective_location",
+          "status",
+          "fugitive_route"
+        ],
+        "title": "TerminalCaseResponse",
         "type": "object"
       },
       "ValidationError": {
@@ -284,9 +334,9 @@
         "summary": "Get Case"
       }
     },
-    "/cases/{case_id}/advance": {
+    "/cases/{case_id}/move": {
       "post": {
-        "operationId": "advance_case_cases__case_id__advance_post",
+        "operationId": "move_case_cases__case_id__move_post",
         "parameters": [
           {
             "in": "path",
@@ -298,26 +348,54 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CaseResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/CaseResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TerminalCaseResponse"
+                    }
+                  ],
+                  "title": "Response Move Case Cases  Case Id  Move Post"
                 }
               }
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IllegalMoveErrorBody"
+                }
+              }
+            },
+            "description": "Illegal move target"
+          },
           "409": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TrailGoneColdError"
+                  "$ref": "#/components/schemas/CaseOverErrorBody"
                 }
               }
             },
-            "description": "Fugitive escaped; trail gone cold"
+            "description": "Case already finished"
           },
           "422": {
             "content": {
@@ -330,7 +408,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Advance Case"
+        "summary": "Move Case"
       }
     },
     "/health": {

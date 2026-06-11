@@ -1,17 +1,29 @@
 """Fugitive Route generation from a Location Graph."""
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
-
-from cawmen_backend.core.chase import FugitiveRoute
 
 if TYPE_CHECKING:
     import random
 
     from cawmen_backend.core.location import LocationGraph
 
+type LocationId = str
+
+
+@dataclass(frozen=True)
+class FugitiveRoute:
+    """The fugitive's secret timed path; route[0] is the detective's origin.
+
+    route[day] gives the fugitive's position on that day (1-indexed).
+    The final element is always the Escape Location.
+    """
+
+    locations: list[LocationId]
+
 
 def generate_route(graph: LocationGraph, rng: random.Random) -> FugitiveRoute:
-    """Generate a seeded Fugitive Route by walking the graph from a random start."""
+    """Generate a seeded Fugitive Route by self-avoiding walk from a random start."""
     non_escape = [loc for loc in graph.locations if not loc.escape]
     escape = next(loc for loc in graph.locations if loc.escape)
 
@@ -19,13 +31,11 @@ def generate_route(graph: LocationGraph, rng: random.Random) -> FugitiveRoute:
     route: list[str] = [start.id]
     current = start.id
 
-    while len(route) < len(non_escape):
-        current = next(
-            c.to
-            for c in graph.connections
-            if c.from_ == current and c.to not in route and c.to != escape.id
-        )
+    while True:
+        candidates = [n for n in graph.neighbors(current) if n not in route]
+        if not candidates:
+            break
+        current = rng.choice(candidates)
         route.append(current)
 
-    route.append(escape.id)
-    return FugitiveRoute(locations=route)
+    return FugitiveRoute(locations=[*route, escape.id])

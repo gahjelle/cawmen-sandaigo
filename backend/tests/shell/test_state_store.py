@@ -8,9 +8,10 @@ def test_saved_case_state_can_be_loaded_back() -> None:
     """State saved under a Case id is returned verbatim on load."""
     store = InMemoryStateStore()
 
-    store.save("case-1", CaseState(day=3))
+    state = CaseState(day=3, seed="s", detective_location="paris", status="in_progress")
+    store.save("case-1", state)
 
-    assert store.load("case-1") == CaseState(day=3)
+    assert store.load("case-1") == state
 
 
 def test_loading_an_unknown_case_returns_none() -> None:

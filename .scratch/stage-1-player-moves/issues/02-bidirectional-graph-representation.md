@@ -1,6 +1,20 @@
 # Revisit bidirectional graph representation
 
-Status: needs-triage
+Status: superseded
+
+> **Superseded by `03-undirected-prism-graph-and-adjacency-api.md`** (decision recorded in
+> [ADR-0012](../../../docs/adr/0012-undirected-location-graph.md)). Kept for history; do not
+> implement separately.
+>
+> **Resolved in grill (see [ADR-0012](../../../docs/adr/0012-undirected-location-graph.md)).**
+> Edges are **undirected**, authored **once** as unordered pairs; the loader expands
+> them. One-way routes are out of scope forever. The Escape Location has **no authored
+> connections** — it is not navigable and is appended by the route generator as the
+> terminus. The scenario file's `connections` become a list of pairs
+> (`["paris", "london"]`), dropping `from`/`to`. The API create-response serves
+> **per-location adjacency** (`{id, name, neighbors}`), dropping the separate
+> `connections` field. The `minimal` graph becomes a 6-Location triangular prism
+> (Paris/London/Madrid + Berlin/Rome/Oslo) so the blind chase is winnable.
 
 ## Context
 

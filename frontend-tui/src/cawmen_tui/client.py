@@ -5,13 +5,14 @@ TUI consumes the same public contract any client would, with contract tests guar
 client's expectations against the live schema.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
     import httpx
 
-_HTTP_TRAIL_GONE_COLD = 409
+_HTTP_CASE_OVER = 409
+_HTTP_ILLEGAL_MOVE = 400
 
 
 @dataclass(frozen=True)
@@ -27,36 +28,45 @@ class Location:
 
     id: str
     name: str
-
-
-@dataclass(frozen=True)
-class Connection:
-    """A directed edge between two named locations."""
-
-    from_: str
-    to: str
+    neighbors: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
 class CaseCreated:
-    """Returned by create_case: the new case id and its location graph."""
+    """Returned by create_case: the new case id, detective start, and location graph."""
 
     case_id: str
+    detective_location: str
     locations: list[Location]
-    connections: list[Connection]
 
 
 @dataclass(frozen=True)
 class CaseState:
-    """Current state of a case: the day counter and the fugitive's location."""
+    """Blind in-progress state: day, detective position, status. Fugitive is hidden."""
 
     day: int
-    fugitive_location: str
+    detective_location: str
+    status: str
 
 
 @dataclass(frozen=True)
-class TrailGoneCold:
-    """Returned (not raised) when the server signals the fugitive has escaped (409)."""
+class TerminalState:
+    """Terminal case state: day, status (won/lost), and the revealed fugitive route."""
+
+    day: int
+    detective_location: str
+    status: str
+    fugitive_route: list[str]
+
+
+@dataclass(frozen=True)
+class CaseOver:
+    """Returned (not raised) when the server signals the case is already finished."""
+
+
+@dataclass(frozen=True)
+class IllegalMove:
+    """Returned (not raised) when the server rejects an illegal move target (400)."""
 
 
 class AbstractClient(Protocol):
@@ -66,13 +76,15 @@ class AbstractClient(Protocol):
         """Fetch the backend's health status."""
 
     async def create_case(self, scenario: str, seed: str | None = None) -> CaseCreated:
-        """POST /cases — returns case_id and location graph."""
+        """POST /cases — returns case_id, detective_location, and location graph."""
 
     async def get_case(self, case_id: str) -> CaseState:
-        """GET /cases/{case_id} — returns day and fugitive_location."""
+        """GET /cases/{case_id} — returns blind state (no fugitive location)."""
 
-    async def advance_case(self, case_id: str) -> CaseState | TrailGoneCold:
-        """POST /cases/{case_id}/advance — new state, or TrailGoneCold on 409."""
+    async def move_case(
+        self, case_id: str, target: str
+    ) -> CaseState | TerminalState | CaseOver | IllegalMove:
+        """POST /cases/{case_id}/move — new state, terminal, or error sentinel."""
 
 
 class BackendClient:
@@ -89,7 +101,7 @@ class BackendClient:
         return Health(status=response.json()["status"])
 
     async def create_case(self, scenario: str, seed: str | None = None) -> CaseCreated:
-        """POST /cases — returns case_id and location graph."""
+        """POST /cases — returns case_id, detective_location, and location graph."""
         body: dict[str, str] = {"scenario": scenario}
         if seed is not None:
             body["seed"] = seed
@@ -97,30 +109,48 @@ class BackendClient:
         response.raise_for_status()
         data = response.json()
         locations = [
-            Location(id=loc["id"], name=loc["name"]) for loc in data["locations"]
-        ]
-        connections = [
-            Connection(from_=conn["from"], to=conn["to"])
-            for conn in data["connections"]
+            Location(id=loc["id"], name=loc["name"], neighbors=loc["neighbors"])
+            for loc in data["locations"]
         ]
         return CaseCreated(
             case_id=data["case_id"],
+            detective_location=data["detective_location"],
             locations=locations,
-            connections=connections,
         )
 
     async def get_case(self, case_id: str) -> CaseState:
-        """GET /cases/{case_id} — returns day and fugitive_location."""
+        """GET /cases/{case_id} — returns blind state (no fugitive location)."""
         response = await self._http.get(f"/cases/{case_id}")
         response.raise_for_status()
         data = response.json()
-        return CaseState(day=data["day"], fugitive_location=data["fugitive_location"])
+        return CaseState(
+            day=data["day"],
+            detective_location=data["detective_location"],
+            status=data["status"],
+        )
 
-    async def advance_case(self, case_id: str) -> CaseState | TrailGoneCold:
-        """POST /cases/{case_id}/advance — new state, or TrailGoneCold on 409."""
-        response = await self._http.post(f"/cases/{case_id}/advance")
-        if response.status_code == _HTTP_TRAIL_GONE_COLD:
-            return TrailGoneCold()
+    async def move_case(
+        self, case_id: str, target: str
+    ) -> CaseState | TerminalState | CaseOver | IllegalMove:
+        """POST /cases/{case_id}/move — new state, terminal, or error sentinel."""
+        response = await self._http.post(
+            f"/cases/{case_id}/move", json={"target": target}
+        )
+        if response.status_code == _HTTP_CASE_OVER:
+            return CaseOver()
+        if response.status_code == _HTTP_ILLEGAL_MOVE:
+            return IllegalMove()
         response.raise_for_status()
         data = response.json()
-        return CaseState(day=data["day"], fugitive_location=data["fugitive_location"])
+        if "fugitive_route" in data:
+            return TerminalState(
+                day=data["day"],
+                detective_location=data["detective_location"],
+                status=data["status"],
+                fugitive_route=data["fugitive_route"],
+            )
+        return CaseState(
+            day=data["day"],
+            detective_location=data["detective_location"],
+            status=data["status"],
+        )
