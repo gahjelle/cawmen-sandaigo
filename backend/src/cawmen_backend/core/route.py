@@ -1,13 +1,25 @@
 """Fugitive Route generation from a Location Graph."""
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
-
-from cawmen_backend.core.chase import FugitiveRoute
 
 if TYPE_CHECKING:
     import random
 
     from cawmen_backend.core.location import LocationGraph
+
+type LocationId = str
+
+
+@dataclass(frozen=True)
+class FugitiveRoute:
+    """The fugitive's secret timed path; route[0] is the detective's origin.
+
+    route[day] gives the fugitive's position on that day (1-indexed).
+    The final element is always the Escape Location.
+    """
+
+    locations: list[LocationId]
 
 
 def generate_route(graph: LocationGraph, rng: random.Random) -> FugitiveRoute:

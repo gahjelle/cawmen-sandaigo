@@ -21,8 +21,8 @@ from cawmen_backend.shell.scenario import load_location_graph
 from cawmen_backend.shell.state_store import InMemoryStateStore
 
 if TYPE_CHECKING:
-    from cawmen_backend.core.chase import FugitiveRoute
     from cawmen_backend.core.location import LocationGraph
+    from cawmen_backend.core.route import FugitiveRoute
 
 
 class HealthResponse(FrozenModel):

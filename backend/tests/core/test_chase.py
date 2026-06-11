@@ -5,7 +5,6 @@ import pytest
 from cawmen_backend.core.chase import (
     CaseOverError,
     CaseState,
-    FugitiveRoute,
     IllegalMoveError,
     Status,
     advance_clock,
@@ -14,6 +13,7 @@ from cawmen_backend.core.chase import (
     has_escaped,
 )
 from cawmen_backend.core.location import LocationGraph
+from cawmen_backend.core.route import FugitiveRoute
 
 # ---------------------------------------------------------------------------
 # Route structure: route[0] = detective origin; route[day] = fugitive on day d

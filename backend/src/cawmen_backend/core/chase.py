@@ -4,6 +4,7 @@ import random
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal
 
+from cawmen_backend.core.route import FugitiveRoute, generate_route
 from cawmen_backend.core.seed import derive_seed
 
 if TYPE_CHECKING:
@@ -19,22 +20,6 @@ class IllegalMoveError(ValueError):
 
 class CaseOverError(ValueError):
     """Raised when a move is attempted on an already-terminal Case."""
-
-
-@dataclass(frozen=True)
-class FugitiveRoute:
-    """The fugitive's secret timed path; route[0] is the detective's origin.
-
-    route[day] gives the fugitive's position on that day (1-indexed).
-    The final element is always the Escape Location.
-    """
-
-    locations: list[LocationId]
-
-
-# Import after FugitiveRoute is defined so route.py can import FugitiveRoute
-# from us without hitting a partial-init circular import.
-from cawmen_backend.core.route import generate_route  # noqa: E402
 
 
 @dataclass(frozen=True)
