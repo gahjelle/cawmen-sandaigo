@@ -1,6 +1,10 @@
 # Store seed in CaseState
 
-Status: needs-triage
+Status: superseded
+
+> **Superseded by `04-detective-moves-playable-blind-loop.md`**, which folds this into the
+> broader `CaseState` reshape (adds `detective_location` and `status` alongside `seed`, and
+> makes `case_id` a distinct UUID). Kept for history; do not implement separately.
 
 ## Context
 
