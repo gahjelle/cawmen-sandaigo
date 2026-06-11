@@ -1,24 +1,22 @@
 # Stage-1 Scenario: a triangular-prism Location Graph.
 #
-# Two triangles (Paris—Rome—Madrid, Berlin—London—Oslo) connected by three rungs
-# (Paris—Berlin, Rome—London, Madrid—Oslo). Each Location has exactly three
+# Two triangles (Paris—Rome—Madrid, Oslo-Berlin—London) connected by three rungs
+# (Paris—Oslo, Rome—Berlin, Madrid—London). Each Location has exactly three
 # neighbours, making every self-avoiding walk from any starting point reachable.
 #
 # Connections are authored as undirected pairs; the loader expands them symmetrically.
 # The Escape Location has no connections and is never a neighbour.
-
 name = "minimal"
-
 connections = [
-  ["paris",  "rome"],
-  ["rome",   "madrid"],
+  ["paris", "rome"],
+  ["rome", "madrid"],
   ["madrid", "paris"],
   ["berlin", "london"],
   ["london", "oslo"],
-  ["oslo",   "berlin"],
-  ["paris",  "berlin"],
-  ["rome",   "london"],
-  ["madrid", "oslo"],
+  ["oslo", "berlin"],
+  ["paris", "oslo"],
+  ["rome", "berlin"],
+  ["madrid", "london"],
 ]
 
 [[locations]]

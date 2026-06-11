@@ -34,7 +34,7 @@ async def test_create_case_returns_case_id_and_location_graph(
     assert len(result.locations) == 6
     assert result.detective_location in PRISM_LOCATIONS
     paris = next(loc for loc in result.locations if loc.id == "paris")
-    assert set(paris.neighbors) == {"rome", "madrid", "berlin"}
+    assert set(paris.neighbors) == {"rome", "madrid", "oslo"}
 
 
 async def test_create_case_has_no_connections(

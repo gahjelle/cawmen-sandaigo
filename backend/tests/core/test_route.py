@@ -37,9 +37,9 @@ PRISM = LocationGraph(
         ["berlin", "london"],
         ["london", "oslo"],
         ["oslo", "berlin"],
-        ["paris", "berlin"],
-        ["rome", "london"],
-        ["madrid", "oslo"],
+        ["paris", "oslo"],
+        ["rome", "berlin"],
+        ["madrid", "london"],
     ],
 )
 

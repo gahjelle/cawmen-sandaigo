@@ -8,11 +8,14 @@ on a terminal outcome.
 """
 
 import uuid
-from typing import Self
+from typing import TYPE_CHECKING, ClassVar, Self
 
 import httpx
 from textual.app import App, ComposeResult
 from textual.widgets import Label, ListItem, ListView, Static
+
+if TYPE_CHECKING:
+    from textual.timer import Timer
 
 from cawmen_tui.client import (
     AbstractClient,
@@ -26,6 +29,7 @@ class CawmenApp(App[None]):
     """The Cawmen Sandaigo terminal client."""
 
     CSS = "#status { dock: bottom; }"
+    BINDINGS: ClassVar = [("n", "new_case", "New case"), ("q", "quit_app", "Quit")]
 
     def __init__(
         self,
@@ -42,6 +46,11 @@ class CawmenApp(App[None]):
         self._locations_map: dict[str, list[str]] = {}
         self._location_names: dict[str, str] = {}
         self._current_neighbors: list[str] = []
+        self._playback_route: list[str] = []
+        self._playback_step: int = 0
+        self._playback_current: str | None = None
+        self._terminal_status: str | None = None
+        self._playback_timer: Timer | None = None
 
     @classmethod
     def from_api_url(cls, api_url: str) -> Self:
@@ -55,6 +64,8 @@ class CawmenApp(App[None]):
         yield Static("", id="clock")
         yield Static("", id="locations")
         yield ListView(id="neighbors")
+        yield Static("", id="route")
+        yield Static("", id="banner")
 
     async def on_mount(self) -> None:
         """Confirm backend reachability, create a case, and enter play mode."""
@@ -88,15 +99,13 @@ class CawmenApp(App[None]):
         neighbors_widget.clear()
 
         if isinstance(state, TerminalState):
-            if state.status == "won":
-                self.query_one("#locations", Static).update(
-                    f"Case won! Fugitive route: {' → '.join(state.fugitive_route)}"
-                )
-            else:
-                self.query_one("#locations", Static).update(
-                    f"Case lost. Fugitive route: {' → '.join(state.fugitive_route)}"
-                )
             self._current_neighbors = []
+            self._playback_route = state.fugitive_route
+            self._playback_step = 0
+            self._playback_current = None
+            self._terminal_status = state.status
+            self.query_one("#route", Static).update("")
+            self._playback_timer = self.set_interval(1.0, self._advance_playback)
         else:
             neighbors = self._locations_map.get(state.detective_location, [])
             self._current_neighbors = neighbors
@@ -119,6 +128,80 @@ class CawmenApp(App[None]):
         result = await self._client.move_case(self._case_id, target)
         if isinstance(result, (CaseState, TerminalState)):
             self._render_state(result)
+
+    def _advance_playback(self) -> None:
+        """Advance playback by one step; show banner after the last route position."""
+        if self._playback_step < len(self._playback_route):
+            self._playback_current = self._playback_route[self._playback_step]
+            self._playback_step += 1
+            self._render_playback_locations()
+            self._append_route_step(self._playback_current)
+            if self._playback_step == len(self._playback_route):
+                if self._playback_timer is not None:
+                    self._playback_timer.stop()
+                self._show_end_banner()
+
+    def _append_route_step(self, loc_id: str) -> None:
+        """Append the next hop name to the #route widget."""
+        name = self._location_names.get(loc_id, loc_id)
+        route_widget = self.query_one("#route", Static)
+        current = str(route_widget.render())
+        if current:
+            route_widget.update(f"{current} → {name}")
+        else:
+            route_widget.update(name)
+
+    def _render_playback_locations(self) -> None:
+        """Refresh #locations to highlight the current playback position."""
+        lines = []
+        for loc_id, name in self._location_names.items():
+            if loc_id == self._detective_location:
+                lines.append(f"[reverse]{name}[/reverse]")
+            elif loc_id == self._playback_current:
+                lines.append(f"[bold red]{name}[/bold red]")
+            else:
+                lines.append(name)
+        self.query_one("#locations", Static).update("\n".join(lines))
+
+    def _show_end_banner(self) -> None:
+        """Show the win/loss banner and N/Q instructions."""
+        if self._terminal_status == "won":
+            message = "Caught them!\n[N] New case  [Q] Quit"
+        else:
+            message = "The trail went cold.\n[N] New case  [Q] Quit"
+        self.query_one("#banner", Static).update(message)
+
+    async def action_new_case(self) -> None:
+        """Start a fresh case with a new random seed on the same scenario."""
+        if self._terminal_status is None:
+            return
+        if self._playback_timer is not None:
+            self._playback_timer.stop()
+            self._playback_timer = None
+        self.query_one("#banner", Static).update("")
+        self.query_one("#route", Static).update("")
+        self._playback_route = []
+        self._playback_step = 0
+        self._playback_current = None
+        self._terminal_status = None
+
+        case = await self._client.create_case(
+            scenario="minimal", seed=str(uuid.uuid4())
+        )
+        self._case_id = case.case_id
+        self._detective_location = case.detective_location
+        self._locations_map = {}
+        self._location_names = {}
+        for loc in case.locations:
+            self._locations_map[loc.id] = loc.neighbors
+            self._location_names[loc.id] = loc.name
+
+        state = await self._client.get_case(self._case_id)
+        self._render_state(state)
+
+    def action_quit_app(self) -> None:
+        """Exit the application."""
+        self.exit()
 
     async def on_unmount(self) -> None:
         """Close the HTTP client if this app created it."""

@@ -26,10 +26,10 @@ if TYPE_CHECKING:
 # ---------------------------------------------------------------------------
 
 _LOCATIONS = [
-    Location(id="paris", name="Paris", neighbors=["berlin", "rome"]),
-    Location(id="berlin", name="Berlin", neighbors=["paris", "london"]),
-    Location(id="rome", name="Rome", neighbors=["paris", "madrid"]),
-    Location(id="madrid", name="Madrid", neighbors=["rome", "oslo"]),
+    Location(id="paris", name="Paris", neighbors=["rome", "madrid"]),
+    Location(id="berlin", name="Berlin", neighbors=["rome"]),
+    Location(id="rome", name="Rome", neighbors=["paris", "madrid", "berlin"]),
+    Location(id="madrid", name="Madrid", neighbors=["rome", "paris"]),
 ]
 
 
@@ -140,10 +140,10 @@ async def test_app_highlights_detective_location_not_fugitive() -> None:
 
 async def test_app_shows_neighbors_of_detective_location() -> None:
     """The neighbour list shows the detective's current location's neighbours."""
-    paris = Location(id="paris", name="Paris", neighbors=["berlin", "rome"])
-    berlin = Location(id="berlin", name="Berlin", neighbors=["paris"])
+    paris = Location(id="paris", name="Paris", neighbors=["rome", "madrid"])
     rome = Location(id="rome", name="Rome", neighbors=["paris"])
-    locations = [paris, berlin, rome]
+    madrid = Location(id="madrid", name="Madrid", neighbors=["paris"])
+    locations = [paris, rome, madrid]
     app = CawmenApp(
         FakeClient(
             locations=locations,
@@ -157,14 +157,14 @@ async def test_app_shows_neighbors_of_detective_location() -> None:
         await pilot.pause()
         labels = [str(lbl.render()) for lbl in pilot.app.query("#neighbors Label")]
 
-        assert any("Berlin" in t for t in labels)
         assert any("Rome" in t for t in labels)
+        assert any("Madrid" in t for t in labels)
 
 
 async def test_pressing_enter_on_first_neighbour_sends_move() -> None:
     """Pressing Enter on a highlighted neighbour fires the move to that location."""
-    # paris neighbours: ["berlin", "rome"]; first item highlighted by default → berlin
-    next_state = CaseState(day=2, detective_location="berlin", status="in_progress")
+    # paris neighbours: ["rome", "madrid"]; first item highlighted by default → rome
+    next_state = CaseState(day=2, detective_location="rome", status="in_progress")
     app = CawmenApp(
         FakeClient(
             detective_start="paris",
@@ -182,13 +182,13 @@ async def test_pressing_enter_on_first_neighbour_sends_move() -> None:
         await pilot.press("enter")
         await pilot.pause(delay=0.1)
 
-        assert cawmen_app._detective_location == "berlin"
+        assert cawmen_app._detective_location == "rome"
 
 
 async def test_pressing_down_then_enter_moves_to_second_neighbour() -> None:
     """Pressing Down then Enter selects the second neighbour."""
-    # paris neighbours: ["berlin", "rome"]; down moves to rome
-    next_state = CaseState(day=2, detective_location="rome", status="in_progress")
+    # paris neighbours: ["rome", "madrid"]; down moves to madrid
+    next_state = CaseState(day=2, detective_location="madrid", status="in_progress")
     app = CawmenApp(
         FakeClient(
             detective_start="paris",
@@ -207,7 +207,7 @@ async def test_pressing_down_then_enter_moves_to_second_neighbour() -> None:
         await pilot.press("enter")
         await pilot.pause(delay=0.1)
 
-        assert cawmen_app._detective_location == "rome"
+        assert cawmen_app._detective_location == "madrid"
 
 
 # ---------------------------------------------------------------------------
@@ -232,8 +232,8 @@ async def test_app_updates_state_after_move() -> None:
         assert cawmen_app._detective_location == "berlin"
 
 
-async def test_app_shows_terminal_message_on_won() -> None:
-    """When the detective wins, the status is shown."""
+async def test_terminal_outcome_clears_neighbour_list() -> None:
+    """On a terminal outcome the neighbour list is cleared (no more moves)."""
     terminal = TerminalState(
         day=2,
         detective_location="berlin",
@@ -249,12 +249,11 @@ async def test_app_shows_terminal_message_on_won() -> None:
         await cawmen_app._move("berlin")
         await pilot.pause()
 
-        rendered = str(cawmen_app.query_one("#locations", Static).render())
-        assert "won" in rendered.lower() or "caught" in rendered.lower()
+        assert len(list(pilot.app.query("#neighbors Label"))) == 0
 
 
-async def test_app_shows_terminal_message_on_lost() -> None:
-    """When the fugitive escapes, the status is shown."""
+async def test_terminal_outcome_starts_playback() -> None:
+    """On a terminal outcome the app stores the route and is ready to play it back."""
     terminal = TerminalState(
         day=3,
         detective_location="berlin",
@@ -270,5 +269,175 @@ async def test_app_shows_terminal_message_on_lost() -> None:
         await cawmen_app._move("berlin")
         await pilot.pause()
 
-        rendered = str(cawmen_app.query_one("#locations", Static).render())
-        assert "lost" in rendered.lower() or "escaped" in rendered.lower()
+        assert cawmen_app._playback_route == ["paris", "rome", "madrid", "escape"]
+
+
+# ---------------------------------------------------------------------------
+# Route playback and end-of-case experience
+# ---------------------------------------------------------------------------
+
+
+async def test_route_widget_accumulates_path_during_playback() -> None:
+    """Each advance step appends the next location name to #route."""
+    terminal = TerminalState(
+        day=2,
+        detective_location="berlin",
+        status="won",
+        fugitive_route=["paris", "rome", "escape"],
+    )
+    app = CawmenApp(FakeClient(move_results=[terminal]))
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        cawmen_app = pilot.app
+        assert isinstance(cawmen_app, CawmenApp)
+
+        await cawmen_app._move("berlin")
+        await pilot.pause()
+
+        cawmen_app._advance_playback()
+        await pilot.pause()
+        route_text = str(cawmen_app.query_one("#route", Static).render())
+        assert "Paris" in route_text
+        assert "Rome" not in route_text
+
+        cawmen_app._advance_playback()
+        await pilot.pause()
+        route_text = str(cawmen_app.query_one("#route", Static).render())
+        assert "Paris" in route_text
+        assert "Rome" in route_text
+
+
+async def test_playback_advances_through_route_steps() -> None:
+    """Each _advance_playback call advances _playback_current to the next position."""
+    terminal = TerminalState(
+        day=2,
+        detective_location="berlin",
+        status="won",
+        fugitive_route=["paris", "berlin", "escape"],
+    )
+    app = CawmenApp(FakeClient(move_results=[terminal]))
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        cawmen_app = pilot.app
+        assert isinstance(cawmen_app, CawmenApp)
+
+        await cawmen_app._move("berlin")
+        await pilot.pause()
+
+        cawmen_app._advance_playback()
+        assert cawmen_app._playback_current == "paris"
+
+        cawmen_app._advance_playback()
+        assert cawmen_app._playback_current == "berlin"
+
+
+async def test_win_banner_appears_after_full_playback() -> None:
+    """After advancing through the full route, 'Caught them!' appears in #banner."""
+    terminal = TerminalState(
+        day=2,
+        detective_location="berlin",
+        status="won",
+        fugitive_route=["paris", "berlin", "escape"],
+    )
+    app = CawmenApp(FakeClient(move_results=[terminal]))
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        cawmen_app = pilot.app
+        assert isinstance(cawmen_app, CawmenApp)
+
+        await cawmen_app._move("berlin")
+        await pilot.pause()
+
+        for _ in terminal.fugitive_route:
+            cawmen_app._advance_playback()
+        await pilot.pause()
+
+        banner = str(cawmen_app.query_one("#banner", Static).render())
+        assert "Caught them" in banner
+
+
+async def test_loss_banner_appears_after_full_playback() -> None:
+    """After the full route plays back on a loss, 'The trail went cold.' appears."""
+    terminal = TerminalState(
+        day=3,
+        detective_location="paris",
+        status="lost",
+        fugitive_route=["paris", "rome", "escape"],
+    )
+    app = CawmenApp(FakeClient(move_results=[terminal]))
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        cawmen_app = pilot.app
+        assert isinstance(cawmen_app, CawmenApp)
+
+        await cawmen_app._move("rome")
+        await pilot.pause()
+
+        for _ in terminal.fugitive_route:
+            cawmen_app._advance_playback()
+        await pilot.pause()
+
+        banner = str(cawmen_app.query_one("#banner", Static).render())
+        assert "trail went cold" in banner
+
+
+@dataclass
+class TrackingFakeClient(FakeClient):
+    """FakeClient that records the seed passed to each create_case call."""
+
+    seeds_seen: list[str | None] = field(default_factory=list)
+
+    async def create_case(
+        self,
+        scenario: str,
+        seed: str | None = None,
+    ) -> CaseCreated:
+        """Record seed then delegate to the parent."""
+        self.seeds_seen.append(seed)
+        return await super().create_case(scenario, seed)
+
+
+async def test_new_case_key_starts_fresh_case_after_playback() -> None:
+    """Pressing N after full playback creates a new case with a different seed."""
+    terminal = TerminalState(
+        day=2,
+        detective_location="berlin",
+        status="won",
+        fugitive_route=["paris", "berlin", "escape"],
+    )
+    next_case_state = CaseState(day=1, detective_location="paris", status="in_progress")
+    fake = TrackingFakeClient(
+        move_results=[terminal],
+        initial_state=next_case_state,
+    )
+    app = CawmenApp(fake)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        cawmen_app = pilot.app
+        assert isinstance(cawmen_app, CawmenApp)
+
+        first_seed = fake.seeds_seen[0] if fake.seeds_seen else None
+
+        await cawmen_app._move("berlin")
+        await pilot.pause()
+        for _ in terminal.fugitive_route:
+            cawmen_app._advance_playback()
+        await pilot.pause()
+
+        await pilot.press("n")
+        await pilot.pause(delay=0.1)
+
+        assert len(fake.seeds_seen) == 2
+        assert fake.seeds_seen[1] != first_seed
+        assert cawmen_app._detective_location == "paris"
+
+
+async def test_quit_key_exits_app() -> None:
+    """Pressing Q exits the application cleanly."""
+    app = CawmenApp(FakeClient())
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        await pilot.press("q")
+        await pilot.pause(delay=0.1)
+
+    assert app.return_value is None  # exited without error

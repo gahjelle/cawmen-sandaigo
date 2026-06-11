@@ -49,7 +49,7 @@ async def test_post_cases_returns_six_named_locations(
 
     data = response.json()
     assert len(data["locations"]) == 6
-    paris = {"id": "paris", "name": "Paris", "neighbors": ["rome", "madrid", "berlin"]}
+    paris = {"id": "paris", "name": "Paris", "neighbors": ["rome", "madrid", "oslo"]}
     assert paris in data["locations"]
 
 
@@ -61,7 +61,7 @@ async def test_post_cases_locations_include_neighbors(
 
     data = response.json()
     paris = next(loc for loc in data["locations"] if loc["id"] == "paris")
-    assert set(paris["neighbors"]) == {"rome", "madrid", "berlin"}
+    assert set(paris["neighbors"]) == {"rome", "madrid", "oslo"}
 
 
 async def test_post_cases_excludes_escape_location(

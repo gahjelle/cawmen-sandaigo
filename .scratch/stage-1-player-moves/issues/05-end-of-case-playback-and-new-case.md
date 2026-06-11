@@ -1,6 +1,6 @@
 # End-of-case experience: route playback + New case / Quit
 
-Status: ready-for-agent
+Status: done
 
 ## Parent
 
@@ -21,13 +21,13 @@ missed, then let them keep playing.
 
 ## Acceptance criteria
 
-- [ ] On a terminal outcome the TUI stops accepting Moves and plays the revealed route
+- [x] On a terminal outcome the TUI stops accepting Moves and plays the revealed route
       back step-by-step on a timer
-- [ ] A win shows a win banner; a loss shows a loss banner
-- [ ] `[N]ew case` starts a fresh Case on `minimal` with a new random seed and renders the
+- [x] A win shows a win banner; a loss shows a loss banner
+- [x] `[N]ew case` starts a fresh Case on `minimal` with a new random seed and renders the
       opening position
-- [ ] `[Q]uit` exits cleanly
-- [ ] `just check` passes
+- [x] `[Q]uit` exits cleanly
+- [x] `just check` passes
 
 ## Blocked by
 

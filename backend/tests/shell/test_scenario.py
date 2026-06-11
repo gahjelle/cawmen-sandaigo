@@ -35,8 +35,8 @@ def test_loads_undirected_connections_and_expands_symmetrically() -> None:
 
     assert "rome" in graph.neighbors("paris")
     assert "paris" in graph.neighbors("rome")
-    assert "berlin" in graph.neighbors("paris")
-    assert "paris" in graph.neighbors("berlin")
+    assert "oslo" in graph.neighbors("paris")
+    assert "paris" in graph.neighbors("oslo")
 
 
 def test_escape_location_has_no_neighbours() -> None:

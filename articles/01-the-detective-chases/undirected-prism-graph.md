@@ -10,8 +10,8 @@ Connections are now authored once as an unordered pair:
 
 ```toml
 connections = [
-  ["paris", "berlin"],
-  ["rome",  "london"],
+  ["paris", "oslo"],
+  ["rome",  "berlin"],
 ]
 ```
 
@@ -19,16 +19,16 @@ The loader reads these into `LocationGraph.connections: list[list[str]]`. The `n
 
 ## The triangular prism
 
-Stage 0's four-city cycle was replaced with a **triangular prism** — two triangles (Paris—Rome—Madrid and Berlin—London—Oslo) joined by three rungs (Paris—Berlin, Rome—London, Madrid—Oslo). Every location has exactly three neighbours.
+Stage 0's four-city cycle was replaced with a **triangular prism** — two triangles (Paris—Rome—Madrid and Berlin—London—Oslo) joined by three rungs (Paris—Oslo, Rome—Berlin, Madrid—London). Every location has exactly three neighbours.
 
 ```mermaid
 graph LR
     Paris --- Rome
     Rome --- Madrid
     Madrid --- Paris
-    Paris --- Berlin
-    Rome --- London
-    Madrid --- Oslo
+    Paris --- Oslo
+    Rome --- Berlin
+    Madrid --- London
     Berlin --- London
     London --- Oslo
     Oslo --- Berlin
@@ -61,7 +61,7 @@ When the walk gets stuck it stops and appends the escape terminus. Routes vary i
 `POST /cases` no longer returns a `connections` list. Instead, each location carries its own `neighbors` array:
 
 ```json
-{ "id": "paris", "name": "Paris", "neighbors": ["rome", "madrid", "berlin"] }
+{ "id": "paris", "name": "Paris", "neighbors": ["rome", "madrid", "oslo"] }
 ```
 
 The client gets everything it needs to render the graph without a separate pass to reconstruct adjacency from edge tuples.
