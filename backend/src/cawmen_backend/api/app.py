@@ -16,7 +16,7 @@ from cawmen_backend.core.chase import (
 from cawmen_backend.core.route import build_route
 from cawmen_backend.models import FrozenModel
 from cawmen_backend.shell.scenario import load_location_graph
-from cawmen_backend.shell.state_store import InMemoryStateStore
+from cawmen_backend.shell.state_store import CaseRecord, InMemoryStateStore
 
 if TYPE_CHECKING:
     from cawmen_backend.core.location import LocationGraph
@@ -94,7 +94,6 @@ def create_app(scenarios_dir: Path = Path("scenarios")) -> FastAPI:
     """Build the FastAPI app exposing the Cawmen Sandaigo REST API."""
     app = FastAPI(title="Cawmen Sandaigo", version="0.0.0")
     store = InMemoryStateStore()
-    case_meta: dict[str, tuple[str, str]] = {}
 
     @app.get("/health")
     def health() -> HealthResponse:
@@ -110,14 +109,16 @@ def create_app(scenarios_dir: Path = Path("scenarios")) -> FastAPI:
 
         store.save(
             case_id,
-            CaseState(
-                day=1,
-                seed=seed,
-                detective_location=detective_start,
-                status="in_progress",
+            CaseRecord(
+                state=CaseState(
+                    day=1,
+                    seed=seed,
+                    detective_location=detective_start,
+                    status="in_progress",
+                ),
+                scenario=body.scenario,
             ),
         )
-        case_meta[case_id] = (body.scenario, seed)
 
         locations = [
             LocationOut(
@@ -136,13 +137,13 @@ def create_app(scenarios_dir: Path = Path("scenarios")) -> FastAPI:
 
     @app.get("/cases/{case_id}")
     def get_case(case_id: str) -> CaseResponse:
-        state = store.load(case_id)
-        if state is None:
+        record = store.load(case_id)
+        if record is None:
             raise HTTPException(status_code=404)
         return CaseResponse(
-            day=state.day,
-            detective_location=state.detective_location,
-            status=state.status,
+            day=record.state.day,
+            detective_location=record.state.detective_location,
+            status=record.state.status,
         )
 
     _move_responses: dict[int | str, dict[str, Any]] = {
@@ -154,24 +155,22 @@ def create_app(scenarios_dir: Path = Path("scenarios")) -> FastAPI:
     def move_case(
         case_id: str, body: MoveRequest
     ) -> CaseResponse | TerminalCaseResponse:
-        state = store.load(case_id)
-        meta = case_meta.get(case_id)
-        if state is None or meta is None:
+        record = store.load(case_id)
+        if record is None:
             raise HTTPException(status_code=404)
 
-        scenario, seed = meta
-        graph = _load_graph(scenarios_dir, scenario)
+        graph = _load_graph(scenarios_dir, record.scenario)
         try:
-            new_state, outcome = apply_move(graph, state, body.target)
+            new_state, outcome = apply_move(graph, record.state, body.target)
         except CaseOverError as exc:
             raise HTTPException(status_code=409, detail="case_over") from exc
         except IllegalMoveError as exc:
             raise HTTPException(status_code=400, detail="illegal_move") from exc
 
-        store.save(case_id, new_state)
+        store.save(case_id, CaseRecord(state=new_state, scenario=record.scenario))
 
         if outcome in {"won", "lost"}:
-            route = build_route(graph, seed)
+            route = build_route(graph, new_state.seed)
             return TerminalCaseResponse(
                 day=new_state.day,
                 detective_location=new_state.detective_location,
