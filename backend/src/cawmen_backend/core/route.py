@@ -1,11 +1,12 @@
 """Fugitive Route generation from a Location Graph."""
 
+import random
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    import random
+from cawmen_backend.core.seed import derive_seed
 
+if TYPE_CHECKING:
     from cawmen_backend.core.location import LocationGraph
 
 type LocationId = str
@@ -20,6 +21,12 @@ class FugitiveRoute:
     """
 
     locations: list[LocationId]
+
+
+def build_route(graph: LocationGraph, seed: str) -> FugitiveRoute:
+    """Build a Fugitive Route from a Case Seed, deriving the RNG stream internally."""
+    rng = random.Random(derive_seed(seed, "route"))  # noqa: S311
+    return generate_route(graph, rng)
 
 
 def generate_route(graph: LocationGraph, rng: random.Random) -> FugitiveRoute:

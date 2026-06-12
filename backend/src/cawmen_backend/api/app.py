@@ -1,6 +1,5 @@
 """The FastAPI application factory and its routes."""
 
-import random
 import uuid
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -14,15 +13,13 @@ from cawmen_backend.core.chase import (
     IllegalMoveError,
     apply_move,
 )
-from cawmen_backend.core.route import generate_route
-from cawmen_backend.core.seed import derive_seed
+from cawmen_backend.core.route import build_route
 from cawmen_backend.models import FrozenModel
 from cawmen_backend.shell.scenario import load_location_graph
 from cawmen_backend.shell.state_store import InMemoryStateStore
 
 if TYPE_CHECKING:
     from cawmen_backend.core.location import LocationGraph
-    from cawmen_backend.core.route import FugitiveRoute
 
 
 class HealthResponse(FrozenModel):
@@ -93,12 +90,6 @@ def _load_graph(scenarios_dir: Path, scenario: str) -> LocationGraph:
     return load_location_graph(scenarios_dir / scenario / "graph.toml")
 
 
-def _build_route(scenarios_dir: Path, scenario: str, seed: str) -> FugitiveRoute:
-    graph = _load_graph(scenarios_dir, scenario)
-    rng = random.Random(derive_seed(seed, "route"))  # noqa: S311
-    return generate_route(graph, rng)
-
-
 def create_app(scenarios_dir: Path = Path("scenarios")) -> FastAPI:
     """Build the FastAPI app exposing the Cawmen Sandaigo REST API."""
     app = FastAPI(title="Cawmen Sandaigo", version="0.0.0")
@@ -114,7 +105,7 @@ def create_app(scenarios_dir: Path = Path("scenarios")) -> FastAPI:
         seed = body.seed or str(uuid.uuid4())
         case_id = str(uuid.uuid4())
         graph = _load_graph(scenarios_dir, body.scenario)
-        route = _build_route(scenarios_dir, body.scenario, seed)
+        route = build_route(graph, seed)
         detective_start = route.locations[0]
 
         store.save(
@@ -180,7 +171,7 @@ def create_app(scenarios_dir: Path = Path("scenarios")) -> FastAPI:
         store.save(case_id, new_state)
 
         if outcome in {"won", "lost"}:
-            route = _build_route(scenarios_dir, scenario, seed)
+            route = build_route(graph, seed)
             return TerminalCaseResponse(
                 day=new_state.day,
                 detective_location=new_state.detective_location,
