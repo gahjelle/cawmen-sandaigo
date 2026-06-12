@@ -4,20 +4,29 @@ In-memory now; a database implementation slots in at Stage 8 (ADR-0008) without 
 pure core changing.
 """
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
     from cawmen_backend.core.chase import CaseState
 
 
+@dataclass(frozen=True)
+class CaseRecord:
+    """A persisted Case: its mutable core state plus the Scenario it belongs to."""
+
+    state: CaseState
+    scenario: str
+
+
 class StateStore(Protocol):
-    """Port for loading and saving Case state by Case identifier."""
+    """Port for loading and saving a CaseRecord by Case identifier."""
 
-    def load(self, case_id: str) -> CaseState | None:
-        """Return the stored state for `case_id`, or `None` if unknown."""
+    def load(self, case_id: str) -> CaseRecord | None:
+        """Return the stored record for `case_id`, or `None` if unknown."""
 
-    def save(self, case_id: str, state: CaseState) -> None:
-        """Persist `state` against `case_id`."""
+    def save(self, case_id: str, record: CaseRecord) -> None:
+        """Persist `record` against `case_id`."""
 
 
 class InMemoryStateStore:
@@ -25,12 +34,12 @@ class InMemoryStateStore:
 
     def __init__(self) -> None:
         """Start with no stored Cases."""
-        self._states: dict[str, CaseState] = {}
+        self._records: dict[str, CaseRecord] = {}
 
-    def load(self, case_id: str) -> CaseState | None:
-        """Return the stored state for `case_id`, or `None` if unknown."""
-        return self._states.get(case_id)
+    def load(self, case_id: str) -> CaseRecord | None:
+        """Return the stored record for `case_id`, or `None` if unknown."""
+        return self._records.get(case_id)
 
-    def save(self, case_id: str, state: CaseState) -> None:
-        """Persist `state` against `case_id`."""
-        self._states[case_id] = state
+    def save(self, case_id: str, record: CaseRecord) -> None:
+        """Persist `record` against `case_id`."""
+        self._records[case_id] = record

@@ -4,7 +4,7 @@ import random
 
 from cawmen_backend.core.chase import CaseState, has_escaped
 from cawmen_backend.core.location import Location, LocationGraph
-from cawmen_backend.core.route import generate_route
+from cawmen_backend.core.route import build_route, generate_route
 
 PARIS = Location(id="paris", name="Paris", stage=0)
 BERLIN = Location(id="berlin", name="Berlin", stage=0)
@@ -102,3 +102,18 @@ def test_prism_route_ends_at_escape() -> None:
     for seed in range(20):
         route = generate_route(PRISM, random.Random(seed))  # noqa: S311
         assert route.locations[-1] == "escape"
+
+
+def test_build_route_is_deterministic_for_same_seed() -> None:
+    """build_route returns the same FugitiveRoute for the same graph and seed string."""
+    route_a = build_route(GRAPH, "abc")
+    route_b = build_route(GRAPH, "abc")
+
+    assert route_a == route_b
+
+
+def test_build_route_differs_for_different_seeds() -> None:
+    """Different seed strings produce different routes (sub-seed derivation active)."""
+    routes = [build_route(PRISM, f"seed-{i}") for i in range(10)]
+
+    assert len({tuple(r.locations) for r in routes}) > 1

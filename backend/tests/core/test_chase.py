@@ -103,18 +103,15 @@ _GRAPH = LocationGraph(
     connections=[["origin", "paris"], ["paris", "berlin"], ["berlin", "escape"]],
 )
 
-# seed "s" with purpose "route" happens to generate the _ROUTE above in tests;
-# but apply_move is driven by graph + state alone in the core. We pass a
-# pre-built route indirectly: tests use a graph + seed whose derived route
-# matches _ROUTE.  For now we invoke apply_move via a helper that swaps in
-# a known route by monkeypatching generate_route in each test.
+# Tests inject a known route by monkeypatching build_route in chase's namespace,
+# keeping apply_move's logic testable without depending on specific seed behaviour.
 
 
 def test_apply_move_relocates_detective_and_advances_day(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """A legal move puts the detective at the target and increments the day."""
-    monkeypatch.setattr("cawmen_backend.core.chase.generate_route", lambda *_: _ROUTE)
+    monkeypatch.setattr("cawmen_backend.core.chase.build_route", lambda *_: _ROUTE)
     state = _state(day=1, detective_location="origin")
 
     new_state, outcome = apply_move(_GRAPH, state, "paris")
@@ -133,7 +130,7 @@ def test_apply_move_wins_when_detective_catches_fugitive(
     # No, let's set day=1, detective moves to berlin.
     # After move: day becomes 2, fugitive moves to route[2] = "berlin".
     # Detective is at berlin = fugitive → won.
-    monkeypatch.setattr("cawmen_backend.core.chase.generate_route", lambda *_: _ROUTE)
+    monkeypatch.setattr("cawmen_backend.core.chase.build_route", lambda *_: _ROUTE)
     state = _state(day=1, detective_location="paris")
 
     new_state, outcome = apply_move(_GRAPH, state, "berlin")
@@ -150,7 +147,7 @@ def test_apply_move_does_not_win_when_stepping_onto_location_fugitive_is_leaving
     # Day 1: fugitive at route[1]="paris". Detective at origin moves to paris.
     # After move: day=2, fugitive moves to route[2]="berlin".
     # Detective is at "paris", fugitive at "berlin" → no co-location → in_progress.
-    monkeypatch.setattr("cawmen_backend.core.chase.generate_route", lambda *_: _ROUTE)
+    monkeypatch.setattr("cawmen_backend.core.chase.build_route", lambda *_: _ROUTE)
     state = _state(day=1, detective_location="origin")
 
     new_state, outcome = apply_move(_GRAPH, state, "paris")
@@ -168,7 +165,7 @@ def test_apply_move_loses_when_fugitive_reaches_escape(
     # But detective is also at "berlin" ≠ "escape" → lost (not won).
     # Wait: after move day→3, fugitive at route[3]="escape". has_escaped → True.
     # But we need to check: is detective at "escape"? No → lost.
-    monkeypatch.setattr("cawmen_backend.core.chase.generate_route", lambda *_: _ROUTE)
+    monkeypatch.setattr("cawmen_backend.core.chase.build_route", lambda *_: _ROUTE)
     state = _state(day=2, detective_location="paris")
 
     new_state, outcome = apply_move(_GRAPH, state, "berlin")
@@ -186,7 +183,7 @@ def test_apply_move_raises_on_non_adjacent_target(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Moving to a non-adjacent location raises IllegalMoveError."""
-    monkeypatch.setattr("cawmen_backend.core.chase.generate_route", lambda *_: _ROUTE)
+    monkeypatch.setattr("cawmen_backend.core.chase.build_route", lambda *_: _ROUTE)
     state = _state(day=1, detective_location="origin")
 
     with pytest.raises(IllegalMoveError):
@@ -195,7 +192,7 @@ def test_apply_move_raises_on_non_adjacent_target(
 
 def test_apply_move_raises_on_self_move(monkeypatch: pytest.MonkeyPatch) -> None:
     """Moving to the current location raises IllegalMoveError."""
-    monkeypatch.setattr("cawmen_backend.core.chase.generate_route", lambda *_: _ROUTE)
+    monkeypatch.setattr("cawmen_backend.core.chase.build_route", lambda *_: _ROUTE)
     state = _state(day=1, detective_location="origin")
 
     with pytest.raises(IllegalMoveError):
@@ -206,7 +203,7 @@ def test_apply_move_raises_on_unknown_location(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Moving to an unknown location raises IllegalMoveError."""
-    monkeypatch.setattr("cawmen_backend.core.chase.generate_route", lambda *_: _ROUTE)
+    monkeypatch.setattr("cawmen_backend.core.chase.build_route", lambda *_: _ROUTE)
     state = _state(day=1, detective_location="origin")
 
     with pytest.raises(IllegalMoveError):
@@ -215,7 +212,7 @@ def test_apply_move_raises_on_unknown_location(
 
 def test_apply_move_raises_on_terminal_case(monkeypatch: pytest.MonkeyPatch) -> None:
     """Moving on a won or lost case raises CaseOverError."""
-    monkeypatch.setattr("cawmen_backend.core.chase.generate_route", lambda *_: _ROUTE)
+    monkeypatch.setattr("cawmen_backend.core.chase.build_route", lambda *_: _ROUTE)
     state = _state(day=1, detective_location="origin", status="won")
 
     with pytest.raises(CaseOverError):

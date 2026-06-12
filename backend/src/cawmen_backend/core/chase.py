@@ -1,11 +1,9 @@
 """The chase: CaseState, route indexing, and the apply_move transition."""
 
-import random
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal
 
-from cawmen_backend.core.route import FugitiveRoute, generate_route
-from cawmen_backend.core.seed import derive_seed
+from cawmen_backend.core.route import FugitiveRoute, build_route
 
 if TYPE_CHECKING:
     from cawmen_backend.core.location import LocationGraph
@@ -56,11 +54,6 @@ def has_escaped(route: FugitiveRoute, state: CaseState) -> bool:
     return state.day >= len(route.locations) - 1
 
 
-def _build_route(graph: LocationGraph, seed: str) -> FugitiveRoute:
-    rng = random.Random(derive_seed(seed, "route"))  # noqa: S311
-    return generate_route(graph, rng)
-
-
 def apply_move(
     graph: LocationGraph, state: CaseState, target: LocationId
 ) -> tuple[CaseState, Status]:
@@ -85,7 +78,7 @@ def apply_move(
     if target not in graph.neighbors(state.detective_location):
         raise IllegalMoveError(target)
 
-    route = _build_route(graph, state.seed)
+    route = build_route(graph, state.seed)
 
     new_day = state.day + 1
 

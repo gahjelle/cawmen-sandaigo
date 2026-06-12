@@ -1,6 +1,5 @@
 """The FastAPI application factory and its routes."""
 
-import random
 import uuid
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -14,15 +13,13 @@ from cawmen_backend.core.chase import (
     IllegalMoveError,
     apply_move,
 )
-from cawmen_backend.core.route import generate_route
-from cawmen_backend.core.seed import derive_seed
+from cawmen_backend.core.route import build_route
 from cawmen_backend.models import FrozenModel
 from cawmen_backend.shell.scenario import load_location_graph
-from cawmen_backend.shell.state_store import InMemoryStateStore
+from cawmen_backend.shell.state_store import CaseRecord, InMemoryStateStore
 
 if TYPE_CHECKING:
     from cawmen_backend.core.location import LocationGraph
-    from cawmen_backend.core.route import FugitiveRoute
 
 
 class HealthResponse(FrozenModel):
@@ -93,17 +90,10 @@ def _load_graph(scenarios_dir: Path, scenario: str) -> LocationGraph:
     return load_location_graph(scenarios_dir / scenario / "graph.toml")
 
 
-def _build_route(scenarios_dir: Path, scenario: str, seed: str) -> FugitiveRoute:
-    graph = _load_graph(scenarios_dir, scenario)
-    rng = random.Random(derive_seed(seed, "route"))  # noqa: S311
-    return generate_route(graph, rng)
-
-
 def create_app(scenarios_dir: Path = Path("scenarios")) -> FastAPI:
     """Build the FastAPI app exposing the Cawmen Sandaigo REST API."""
     app = FastAPI(title="Cawmen Sandaigo", version="0.0.0")
     store = InMemoryStateStore()
-    case_meta: dict[str, tuple[str, str]] = {}
 
     @app.get("/health")
     def health() -> HealthResponse:
@@ -114,19 +104,21 @@ def create_app(scenarios_dir: Path = Path("scenarios")) -> FastAPI:
         seed = body.seed or str(uuid.uuid4())
         case_id = str(uuid.uuid4())
         graph = _load_graph(scenarios_dir, body.scenario)
-        route = _build_route(scenarios_dir, body.scenario, seed)
+        route = build_route(graph, seed)
         detective_start = route.locations[0]
 
         store.save(
             case_id,
-            CaseState(
-                day=1,
-                seed=seed,
-                detective_location=detective_start,
-                status="in_progress",
+            CaseRecord(
+                state=CaseState(
+                    day=1,
+                    seed=seed,
+                    detective_location=detective_start,
+                    status="in_progress",
+                ),
+                scenario=body.scenario,
             ),
         )
-        case_meta[case_id] = (body.scenario, seed)
 
         locations = [
             LocationOut(
@@ -145,13 +137,13 @@ def create_app(scenarios_dir: Path = Path("scenarios")) -> FastAPI:
 
     @app.get("/cases/{case_id}")
     def get_case(case_id: str) -> CaseResponse:
-        state = store.load(case_id)
-        if state is None:
+        record = store.load(case_id)
+        if record is None:
             raise HTTPException(status_code=404)
         return CaseResponse(
-            day=state.day,
-            detective_location=state.detective_location,
-            status=state.status,
+            day=record.state.day,
+            detective_location=record.state.detective_location,
+            status=record.state.status,
         )
 
     _move_responses: dict[int | str, dict[str, Any]] = {
@@ -163,24 +155,22 @@ def create_app(scenarios_dir: Path = Path("scenarios")) -> FastAPI:
     def move_case(
         case_id: str, body: MoveRequest
     ) -> CaseResponse | TerminalCaseResponse:
-        state = store.load(case_id)
-        meta = case_meta.get(case_id)
-        if state is None or meta is None:
+        record = store.load(case_id)
+        if record is None:
             raise HTTPException(status_code=404)
 
-        scenario, seed = meta
-        graph = _load_graph(scenarios_dir, scenario)
+        graph = _load_graph(scenarios_dir, record.scenario)
         try:
-            new_state, outcome = apply_move(graph, state, body.target)
+            new_state, outcome = apply_move(graph, record.state, body.target)
         except CaseOverError as exc:
             raise HTTPException(status_code=409, detail="case_over") from exc
         except IllegalMoveError as exc:
             raise HTTPException(status_code=400, detail="illegal_move") from exc
 
-        store.save(case_id, new_state)
+        store.save(case_id, CaseRecord(state=new_state, scenario=record.scenario))
 
         if outcome in {"won", "lost"}:
-            route = _build_route(scenarios_dir, scenario, seed)
+            route = build_route(graph, new_state.seed)
             return TerminalCaseResponse(
                 day=new_state.day,
                 detective_location=new_state.detective_location,
