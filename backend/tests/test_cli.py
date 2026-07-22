@@ -17,6 +17,7 @@ def test_serve_runs_uvicorn_on_the_requested_host_and_port(
     captured: dict[str, Any] = {}
 
     def fake_run(app: object, *, host: str, port: int, access_log: bool) -> None:
+        """Record the arguments uvicorn.run was called with."""
         captured["app"] = app
         captured["host"] = host
         captured["port"] = port

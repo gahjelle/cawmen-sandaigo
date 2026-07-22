@@ -1,6 +1,18 @@
 [tool.uv.workspace]
 members = ["backend", "frontend-tui"]
 
+[dependency-groups]
+dev = [
+    "garuff>=2026.7.0",
+    "httpx>=0.28.1",
+    "ipython>=9.14.1",
+    "prek>=0.4.4",
+    "pytest>=9.0.3",
+    "pytest-asyncio>=1.4.0",
+    "ruff>=0.15.16",
+    "ty>=0.0.44",
+]
+
 [tool.ruff]
 target-version = "py314"
 src = ["backend/src", "frontend-tui/src"]
@@ -14,6 +26,9 @@ ignore = ["COM812", "D203", "D213"]
 # SLF001: tests may reach into internals. INP001: tests use importlib mode, no __init__.
 "**/tests/**" = ["S101", "PLR2004", "SLF001", "INP001"]
 
+[tool.garuff.rules.GAC008]
+max_positional_args = 2
+
 [tool.ty.environment]
 root = ["backend/src", "frontend-tui/src", "."]
 
@@ -21,15 +36,4 @@ root = ["backend/src", "frontend-tui/src", "."]
 asyncio_mode = "auto"
 addopts = "--import-mode=importlib"
 pythonpath = ["."]
-testpaths = ["backend/tests", "frontend-tui/tests", "tools/tests"]
-
-[dependency-groups]
-dev = [
-    "httpx>=0.28.1",
-    "ipython>=9.14.1",
-    "prek>=0.4.4",
-    "pytest>=9.0.3",
-    "pytest-asyncio>=1.4.0",
-    "ruff>=0.15.16",
-    "ty>=0.0.44",
-]
+testpaths = ["backend/tests", "frontend-tui/tests"]

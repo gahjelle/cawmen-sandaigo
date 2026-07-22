@@ -34,6 +34,7 @@ def _state(
     status: Status = "in_progress",
     seed: str = "seed",
 ) -> CaseState:
+    """Build a CaseState with sensible defaults, overriding only what a test needs."""
     return CaseState(
         day=day,
         seed=seed,
@@ -114,7 +115,7 @@ def test_apply_move_relocates_detective_and_advances_day(
     monkeypatch.setattr("cawmen_backend.core.chase.build_route", lambda *_: _ROUTE)
     state = _state(day=1, detective_location="origin")
 
-    new_state, outcome = apply_move(_GRAPH, state, "paris")
+    new_state, outcome = apply_move(_GRAPH, state, target="paris")
 
     assert new_state.detective_location == "paris"
     assert new_state.day == 2
@@ -133,7 +134,7 @@ def test_apply_move_wins_when_detective_catches_fugitive(
     monkeypatch.setattr("cawmen_backend.core.chase.build_route", lambda *_: _ROUTE)
     state = _state(day=1, detective_location="paris")
 
-    new_state, outcome = apply_move(_GRAPH, state, "berlin")
+    new_state, outcome = apply_move(_GRAPH, state, target="berlin")
 
     assert outcome == "won"
     assert new_state.status == "won"
@@ -150,7 +151,7 @@ def test_apply_move_does_not_win_when_stepping_onto_location_fugitive_is_leaving
     monkeypatch.setattr("cawmen_backend.core.chase.build_route", lambda *_: _ROUTE)
     state = _state(day=1, detective_location="origin")
 
-    new_state, outcome = apply_move(_GRAPH, state, "paris")
+    new_state, outcome = apply_move(_GRAPH, state, target="paris")
 
     assert outcome == "in_progress"
     assert new_state.detective_location == "paris"
@@ -168,7 +169,7 @@ def test_apply_move_loses_when_fugitive_reaches_escape(
     monkeypatch.setattr("cawmen_backend.core.chase.build_route", lambda *_: _ROUTE)
     state = _state(day=2, detective_location="paris")
 
-    new_state, outcome = apply_move(_GRAPH, state, "berlin")
+    new_state, outcome = apply_move(_GRAPH, state, target="berlin")
 
     assert outcome == "lost"
     assert new_state.status == "lost"
@@ -187,7 +188,7 @@ def test_apply_move_raises_on_non_adjacent_target(
     state = _state(day=1, detective_location="origin")
 
     with pytest.raises(IllegalMoveError):
-        apply_move(_GRAPH, state, "berlin")
+        apply_move(_GRAPH, state, target="berlin")
 
 
 def test_apply_move_raises_on_self_move(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -196,7 +197,7 @@ def test_apply_move_raises_on_self_move(monkeypatch: pytest.MonkeyPatch) -> None
     state = _state(day=1, detective_location="origin")
 
     with pytest.raises(IllegalMoveError):
-        apply_move(_GRAPH, state, "origin")
+        apply_move(_GRAPH, state, target="origin")
 
 
 def test_apply_move_raises_on_unknown_location(
@@ -207,7 +208,7 @@ def test_apply_move_raises_on_unknown_location(
     state = _state(day=1, detective_location="origin")
 
     with pytest.raises(IllegalMoveError):
-        apply_move(_GRAPH, state, "tokyo")
+        apply_move(_GRAPH, state, target="tokyo")
 
 
 def test_apply_move_raises_on_terminal_case(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -216,4 +217,4 @@ def test_apply_move_raises_on_terminal_case(monkeypatch: pytest.MonkeyPatch) -> 
     state = _state(day=1, detective_location="origin", status="won")
 
     with pytest.raises(CaseOverError):
-        apply_move(_GRAPH, state, "paris")
+        apply_move(_GRAPH, state, target="paris")

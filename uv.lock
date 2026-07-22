@@ -10,6 +10,7 @@ members = [
 
 [manifest.dependency-groups]
 dev = [
+    { name = "garuff", specifier = ">=2026.7.0" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "ipython", specifier = ">=9.14.1" },
     { name = "prek", specifier = ">=0.4.4" },
@@ -201,6 +202,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/81/2d/ff8d91d7b564d464629a0fd50a4489c97fcb836ac230bf3a7269232a9b1f/fastapi-0.136.3.tar.gz", hash = "sha256:e487fae93ad408e6f47641ee4dfe389864fd7bec92e547ea8498fc13f43e83ab", size = 396410, upload-time = "2026-05-23T18:53:15.192Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e0/82/45359b62a067409bd929ae8a56b8ed13e5a8c8a61194b3c236920999ab83/fastapi-0.136.3-py3-none-any.whl", hash = "sha256:3d2a69bdf04b7e9f3afa292c3bc7a98816bbfafa10bc9b45f3f3700d2f761620", size = 117481, upload-time = "2026-05-23T18:53:16.924Z" },
+]
+
+[[package]]
+name = "garuff"
+version = "2026.7.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/23/c1/1ed64967c3d3b81bb6671afd5ec4f7b13a457723a6df0d3159acd4c1b793/garuff-2026.7.0.tar.gz", hash = "sha256:9e7639ee24a834c9ff131bc393239e126350891c2b6503cf77d988abec9104f7", size = 32107, upload-time = "2026-07-17T19:17:12.085Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c4/92/7d7b702f0c5a50d08c7ed2b773c8396e3f55f060d25ba8adc8a62a21fa4b/garuff-2026.7.0-py3-none-any.whl", hash = "sha256:188efb978875b2f6df1b55341d8ecf10138409daa4d73435e4592f2e3380de17", size = 46522, upload-time = "2026-07-17T19:17:10.789Z" },
 ]
 
 [[package]]

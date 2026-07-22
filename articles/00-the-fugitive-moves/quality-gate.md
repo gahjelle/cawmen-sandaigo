@@ -1,5 +1,9 @@
 # The quality gate
 
+> **Editor's note:** the homegrown `repolint` described below was later replaced by
+> [Garuff](https://pypi.org/project/garuff/). This article preserves the stage-00 story as
+> it shipped.
+
 `just check` is the full local gate — what CI runs and what you run before pushing:
 
 ```

@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 type LocationId = str
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class FugitiveRoute:
     """The fugitive's secret timed path; route[0] is the detective's origin.
 

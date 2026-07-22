@@ -20,7 +20,7 @@ class CaseOverError(ValueError):
     """Raised when a move is attempted on an already-terminal Case."""
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class CaseState:
     """The mutable facts of a Case, advanced by the In-Game Clock (1-based day)."""
 
@@ -55,7 +55,7 @@ def has_escaped(route: FugitiveRoute, state: CaseState) -> bool:
 
 
 def apply_move(
-    graph: LocationGraph, state: CaseState, target: LocationId
+    graph: LocationGraph, state: CaseState, *, target: LocationId
 ) -> tuple[CaseState, Status]:
     """Apply one detective Move, advance the clock, relocate the fugitive, then judge.
 

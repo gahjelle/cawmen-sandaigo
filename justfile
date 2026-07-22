@@ -24,8 +24,8 @@ typecheck:
     uv run ty check
 
 # Enforce repo-specific conventions ruff/ty can't express.
-conventions *args:
-    uv run python -m tools.repolint {{args}}
+conventions:
+    uv run garuff check -q
 
 # Run the test suite.
 test:

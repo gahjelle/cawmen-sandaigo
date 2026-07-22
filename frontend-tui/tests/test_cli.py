@@ -14,6 +14,7 @@ def test_play_targets_the_backend_at_the_given_api_url(
     captured: dict[str, str] = {}
 
     def fake_run(self: CawmenApp) -> None:
+        """Capture the client's base URL instead of launching the TUI."""
         assert isinstance(self._client, BackendClient)
         captured["base_url"] = str(self._client._http.base_url)
 

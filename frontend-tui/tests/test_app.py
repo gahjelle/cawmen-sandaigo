@@ -33,7 +33,7 @@ _LOCATIONS = [
 ]
 
 
-@dataclass
+@dataclass(kw_only=True)
 class FakeClient:
     """Controllable stand-in for BackendClient used in unit tests."""
 
@@ -381,7 +381,7 @@ async def test_loss_banner_appears_after_full_playback() -> None:
         assert "trail went cold" in banner
 
 
-@dataclass
+@dataclass(kw_only=True)
 class TrackingFakeClient(FakeClient):
     """FakeClient that records the seed passed to each create_case call."""
 

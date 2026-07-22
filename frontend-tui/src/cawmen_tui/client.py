@@ -15,14 +15,14 @@ _HTTP_CASE_OVER = 409
 _HTTP_ILLEGAL_MOVE = 400
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class Health:
     """The backend's reported liveness."""
 
     status: str
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class Location:
     """A named location in the case's location graph (Escape Location excluded)."""
 
@@ -31,7 +31,7 @@ class Location:
     neighbors: list[str] = field(default_factory=list)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class CaseCreated:
     """Returned by create_case: the new case id, detective start, and location graph."""
 
@@ -40,7 +40,7 @@ class CaseCreated:
     locations: list[Location]
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class CaseState:
     """Blind in-progress state: day, detective position, status. Fugitive is hidden."""
 
@@ -49,7 +49,7 @@ class CaseState:
     status: str
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class TerminalState:
     """Terminal case state: day, status (won/lost), and the revealed fugitive route."""
 
@@ -59,12 +59,12 @@ class TerminalState:
     fugitive_route: list[str]
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class CaseOver:
     """Returned (not raised) when the server signals the case is already finished."""
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class IllegalMove:
     """Returned (not raised) when the server rejects an illegal move target (400)."""
 
