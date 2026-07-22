@@ -46,7 +46,7 @@ the graph loader or adds Move UI. Document the decision in an ADR.
 
 - An ADR records the chosen representation and the reasoning
 - The graph loader and scenario files are consistent with that decision
-- A repolint or schema check prevents asymmetric edge authoring (if explicit pairs are kept)
+- A garuff or schema check prevents asymmetric edge authoring (if explicit pairs are kept)
 
 ## Last step
 

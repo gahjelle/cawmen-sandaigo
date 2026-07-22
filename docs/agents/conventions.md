@@ -19,22 +19,18 @@ Python is pinned to 3.14.
 
 ## Repo-specific conventions
 
-Beyond what ruff and ty can express, these rules are enforced by
-`uv run python -m tools.repolint` (pass `--fix` to apply the safe textual fixes; also
-wired into pre-commit and CI):
+Beyond what ruff and ty can express, repo-specific rules are enforced by
+[garuff](https://pypi.org/project/garuff/) — `uv run garuff check` (pass `--fix` to apply
+the available fixers; also wired into pre-commit and CI). It ships an opinionated catalog
+covering, among others: no `from __future__ import annotations` (Python 3.14 evaluates
+annotations lazily via PEP 649); Pydantic models inherit `FrozenModel`/`StrictModel`, never
+`BaseModel`; single backticks in docstrings; `list[T]` over `tuple[T, ...]` for homogeneous
+sequences; keyword-only dataclasses; docstrings on every function; and a cap on positional
+parameters.
 
-- `CAW001` — no `from __future__ import annotations` (Python 3.14 evaluates annotations
-  lazily via PEP 649, so `TYPE_CHECKING`-guarded imports work without it).
-- `CAW002` — Pydantic models inherit `FrozenModel` (`cawmen_backend/models.py`, which sets
-  `ConfigDict(extra="forbid", frozen=True)`), never `BaseModel` directly.
-- `CAW003` — `Protocol` methods omit `...`; the docstring is body enough.
-- `CAW004` — docstrings use single backticks, never double.
-- `CAW005` — homogeneous sequences are `list`, not `tuple[T, ...]`. Reserve `tuple` for
-  heterogeneous, row-like data — and even then prefer a named container (model/dataclass).
-- `CAW006` — return `typing.Self`, never a string forward-ref to the enclosing class.
-
-`--fix` covers the safe textual rules (`CAW001`, `CAW004`); the rest report-only with a
-hint, since they need import management.
+Run `uv run garuff rule --all` for the authoritative catalog (each rule prints its *why*
+and *fix*), or `uv run garuff rule <CODE>` for one. Repo-specific configuration lives in
+`[tool.garuff]` in `pyproject.toml` — currently `GAC008`'s `max_positional_args = 2`.
 
 ## Testing
 

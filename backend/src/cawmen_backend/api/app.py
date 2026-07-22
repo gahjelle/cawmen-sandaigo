@@ -87,6 +87,7 @@ class CaseOverErrorBody(FrozenModel):
 
 
 def _load_graph(scenarios_dir: Path, scenario: str) -> LocationGraph:
+    """Load the Location Graph for `scenario` from the scenarios directory."""
     return load_location_graph(scenarios_dir / scenario / "graph.toml")
 
 
@@ -97,10 +98,12 @@ def create_app(scenarios_dir: Path = Path("scenarios")) -> FastAPI:
 
     @app.get("/health")
     def health() -> HealthResponse:
+        """Report backend liveness."""
         return HealthResponse(status="ok")
 
     @app.post("/cases")
     def create_case(body: CreateCaseRequest) -> CreateCaseResponse:
+        """Start a new Case: seed the fugitive Route and return the opening state."""
         seed = body.seed or str(uuid.uuid4())
         case_id = str(uuid.uuid4())
         graph = _load_graph(scenarios_dir, body.scenario)
@@ -137,6 +140,7 @@ def create_app(scenarios_dir: Path = Path("scenarios")) -> FastAPI:
 
     @app.get("/cases/{case_id}")
     def get_case(case_id: str) -> CaseResponse:
+        """Return the blind in-progress state for `case_id`."""
         record = store.load(case_id)
         if record is None:
             raise HTTPException(status_code=404)
@@ -155,13 +159,14 @@ def create_app(scenarios_dir: Path = Path("scenarios")) -> FastAPI:
     def move_case(
         case_id: str, body: MoveRequest
     ) -> CaseResponse | TerminalCaseResponse:
+        """Apply a detective Move to `case_id`, returning the new or terminal state."""
         record = store.load(case_id)
         if record is None:
             raise HTTPException(status_code=404)
 
         graph = _load_graph(scenarios_dir, record.scenario)
         try:
-            new_state, outcome = apply_move(graph, record.state, body.target)
+            new_state, outcome = apply_move(graph, record.state, target=body.target)
         except CaseOverError as exc:
             raise HTTPException(status_code=409, detail="case_over") from exc
         except IllegalMoveError as exc:

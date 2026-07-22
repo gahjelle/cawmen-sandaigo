@@ -21,5 +21,5 @@ Multi-context layout — `CONTEXT-MAP.md` at the root points to per-context `CON
 ## Tooling & conventions
 
 Everything runs through `uv`; the full local gate is `just check`. Strict ruff (`ALL`) +
-`ty`-only typing, plus repo-specific rules enforced by `uv run python -m tools.repolint`.
+`ty`-only typing, plus repo-specific rules enforced by `uv run garuff check`.
 See `docs/agents/conventions.md`.

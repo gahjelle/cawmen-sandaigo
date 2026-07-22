@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from cawmen_backend.core.chase import CaseState
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class CaseRecord:
     """A persisted Case: its mutable core state plus the Scenario it belongs to."""
 

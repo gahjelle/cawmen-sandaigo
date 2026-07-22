@@ -259,6 +259,7 @@
   "paths": {
     "/cases": {
       "post": {
+        "description": "Start a new Case: seed the fugitive Route and return the opening state.",
         "operationId": "create_case_cases_post",
         "requestBody": {
           "content": {
@@ -297,6 +298,7 @@
     },
     "/cases/{case_id}": {
       "get": {
+        "description": "Return the blind in-progress state for `case_id`.",
         "operationId": "get_case_cases__case_id__get",
         "parameters": [
           {
@@ -336,6 +338,7 @@
     },
     "/cases/{case_id}/move": {
       "post": {
+        "description": "Apply a detective Move to `case_id`, returning the new or terminal state.",
         "operationId": "move_case_cases__case_id__move_post",
         "parameters": [
           {
@@ -413,6 +416,7 @@
     },
     "/health": {
       "get": {
+        "description": "Report backend liveness.",
         "operationId": "health_health_get",
         "responses": {
           "200": {
