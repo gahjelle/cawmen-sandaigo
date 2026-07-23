@@ -1,6 +1,13 @@
 # Split TUI GameSession from PlaybackState
 
-Status: needs-triage
+Status: open
+Labels: wayfinder:task
+Assignee:
+Parent: [Stage 2 map](../MAP.md)
+
+> **Execution-task** (planning-only exception): a pure refactor to hand off, not a
+> decision. It is on the frontier — takeable immediately, blocks nothing — and clears the
+> runway before Interview adds live-game clue fields.
 
 ## Context
 
@@ -42,7 +49,7 @@ When implementing Stage 2 TUI changes, refactor `CawmenApp` before adding new fi
 
 ## Blocked by
 
-Nothing — can be done as a pure refactor before or alongside the Interview TUI work.
+_Nothing — frontier._ A pure refactor, done before or alongside the Interview TUI work.
 
 ## Last step
 

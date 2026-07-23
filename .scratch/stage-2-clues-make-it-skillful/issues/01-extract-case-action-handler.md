@@ -1,6 +1,13 @@
 # Extract a CaseActionHandler for action orchestration
 
-Status: needs-triage
+Status: open
+Labels: wayfinder:task
+Assignee:
+Parent: [Stage 2 map](../MAP.md)
+
+> **Execution-task** (planning-only exception): this is a refactor to hand off, not a
+> decision. It is on the map because the Interview API-surface decision genuinely gates
+> its shape. Do not start it until that ticket closes.
 
 ## Context
 
@@ -38,7 +45,8 @@ orchestration.
 
 ## Blocked by
 
-The Interview feature issue (not yet written — this stub is written ahead of the PRD).
+- [Interview API surface](./05-interview-api-surface.md) — the handler's `move` / `interview`
+  signatures and error-mapping follow from the decided endpoint shape.
 
 ## Last step
 
