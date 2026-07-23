@@ -2,7 +2,7 @@
 
 ### Issue tracker
 
-Issues live as local markdown files under `.scratch/<feature-slug>/`. See `docs/agents/issue-tracker.md`.
+Issues and the `/wayfinder` map live as GitHub issues in `gahjelle/cawmen-sandaigo` (via the `gh` CLI). See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
@@ -21,5 +21,5 @@ Multi-context layout — `CONTEXT-MAP.md` at the root points to per-context `CON
 ## Tooling & conventions
 
 Everything runs through `uv`; the full local gate is `just check`. Strict ruff (`ALL`) +
-`ty`-only typing, plus repo-specific rules enforced by `uv run garuff check`.
-See `docs/agents/conventions.md`.
+`ty`-only typing, plus repo-specific rules enforced by `uv run garuff check`. GitHub PRs
+are always opened ready for review — never as a `--draft`. See `docs/agents/conventions.md`.
