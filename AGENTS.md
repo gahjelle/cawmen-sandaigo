@@ -2,7 +2,7 @@
 
 ### Issue tracker
 
-Issues live as local markdown files under `.scratch/<feature-slug>/`. See `docs/agents/issue-tracker.md`.
+Issues and the `/wayfinder` map live as GitHub issues in `gahjelle/cawmen-sandaigo` (via the `gh` CLI). See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
