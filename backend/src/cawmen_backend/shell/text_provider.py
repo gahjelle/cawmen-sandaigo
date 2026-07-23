@@ -12,8 +12,8 @@ from cawmen_backend.core.clue import Clue, ColdTrail, Sighting
 class TextProvider(Protocol):
     """Port rendering structured, language-free facts into Language-Preference prose."""
 
-    def clock(self, *, day: int, language: str) -> str:
-        """Render the In-Game Clock for the given day."""
+    def clock(self, *, day: int, hour: int, language: str) -> str:
+        """Render the two-tier In-Game Clock for the given day and hour."""
 
     def clue(self, *, clue: Clue, language: str) -> str:
         """Render an Interview Clue as a freshness report."""
@@ -38,10 +38,10 @@ class TemplatedTextProvider:
         "no": "Ingen spor av dem her — sporet er kaldt.",
     }
 
-    def clock(self, *, day: int, language: str) -> str:
-        """Render the In-Game Clock for the given day, falling back to English."""
+    def clock(self, *, day: int, hour: int, language: str) -> str:
+        """Render the two-tier clock as 'Day D, HH:00', falling back to English."""
         label = self._DAY_LABELS.get(language, self._DAY_LABELS["en"])
-        return f"{label} {day}"
+        return f"{label} {day}, {hour:02d}:00"
 
     def clue(self, *, clue: Clue, language: str) -> str:
         """Render an Interview Clue, falling back to English for an unknown language."""
