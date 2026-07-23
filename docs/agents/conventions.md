@@ -32,6 +32,10 @@ Run `uv run garuff rule --all` for the authoritative catalog (each rule prints i
 and *fix*), or `uv run garuff rule <CODE>` for one. Repo-specific configuration lives in
 `[tool.garuff]` in `pyproject.toml` — currently `GAC008`'s `max_positional_args = 2`.
 
+## Pull requests
+
+Open PRs ready for review — **never** create a PR as a draft (no `gh pr create --draft`).
+
 ## Testing
 
 New behaviour is written test-first (red → green): write a failing test that pins the
