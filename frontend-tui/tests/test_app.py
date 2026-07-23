@@ -313,7 +313,7 @@ async def test_route_widget_accumulates_path_during_playback() -> None:
 
 
 async def test_playback_advances_through_route_steps() -> None:
-    """Each _advance_playback call advances _playback_current to the next position."""
+    """Each _advance_playback call advances the current stop to the next position."""
     terminal = TerminalState(
         day=2,
         detective_location="berlin",
@@ -331,10 +331,10 @@ async def test_playback_advances_through_route_steps() -> None:
 
         assert cawmen_app._playback is not None
         cawmen_app._advance_playback()
-        assert cawmen_app._playback.current == "paris"
+        assert cawmen_app._playback.current_stop == "paris"
 
         cawmen_app._advance_playback()
-        assert cawmen_app._playback.current == "berlin"
+        assert cawmen_app._playback.current_stop == "berlin"
 
 
 async def test_win_banner_appears_after_full_playback() -> None:

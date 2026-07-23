@@ -48,7 +48,7 @@ class PlaybackState:
 
     route: list[str]
     step: int = 0
-    current: str | None = None
+    current_stop: str | None = None
     status: str | None = None
     timer: Timer | None = None
 
@@ -157,25 +157,24 @@ class CawmenApp(App[None]):
 
     def _advance_playback(self) -> None:
         """Advance playback by one step; show banner after the last route position."""
-        if self._playback is None:
+        # Playback only exists alongside a session (both set together on the terminal
+        # outcome), so guarding here lets the helpers take non-None values.
+        if self._playback is None or self._session is None:
             return
-        if self._playback.step < len(self._playback.route):
-            self._playback.current = self._playback.route[self._playback.step]
-            self._playback.step += 1
-            self._render_playback_locations()
-            self._append_route_step(self._playback.current)
-            if self._playback.step == len(self._playback.route):
-                if self._playback.timer is not None:
-                    self._playback.timer.stop()
+        session, playback = self._session, self._playback
+        if playback.step < len(playback.route):
+            loc_id = playback.route[playback.step]
+            playback.current_stop = loc_id
+            playback.step += 1
+            self._render_playback_locations(session, playback)
+            self._append_route_step(session.location_names.get(loc_id, loc_id))
+            if playback.step == len(playback.route):
+                if playback.timer is not None:
+                    playback.timer.stop()
                 self._show_end_banner()
 
-    def _append_route_step(self, loc_id: str) -> None:
-        """Append the next hop name to the #route widget."""
-        name = (
-            loc_id
-            if self._session is None
-            else self._session.location_names.get(loc_id, loc_id)
-        )
+    def _append_route_step(self, name: str) -> None:
+        """Append the given hop name to the #route widget."""
         route_widget = self.query_one("#route", Static)
         current = str(route_widget.render())
         if current:
@@ -183,15 +182,15 @@ class CawmenApp(App[None]):
         else:
             route_widget.update(name)
 
-    def _render_playback_locations(self) -> None:
+    def _render_playback_locations(
+        self, session: GameSession, playback: PlaybackState
+    ) -> None:
         """Refresh #locations to highlight the current playback position."""
-        if self._session is None or self._playback is None:
-            return
         lines = []
-        for loc_id, name in self._session.location_names.items():
-            if loc_id == self._session.detective_location:
+        for loc_id, name in session.location_names.items():
+            if loc_id == session.detective_location:
                 lines.append(f"[reverse]{name}[/reverse]")
-            elif loc_id == self._playback.current:
+            elif loc_id == playback.current_stop:
                 lines.append(f"[bold red]{name}[/bold red]")
             else:
                 lines.append(name)
