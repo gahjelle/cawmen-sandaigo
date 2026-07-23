@@ -72,23 +72,6 @@ class CawmenApp(App[None]):
         self._session: GameSession | None = None
         self._playback: PlaybackState | None = None
 
-    # -- Test-facing accessors: the two dataclasses above are the storage; these
-    #    keep the historically-observed field names readable from outside.
-    @property
-    def _detective_location(self) -> str | None:
-        """The detective's current location, or None before a session starts."""
-        return self._session.detective_location if self._session else None
-
-    @property
-    def _playback_route(self) -> list[str]:
-        """The fugitive route being played back, or empty before a terminal."""
-        return self._playback.route if self._playback else []
-
-    @property
-    def _playback_current(self) -> str | None:
-        """The route position currently highlighted during playback."""
-        return self._playback.current if self._playback else None
-
     @classmethod
     def from_api_url(cls, api_url: str) -> Self:
         """Build an app that connects to an already-running backend over HTTP."""

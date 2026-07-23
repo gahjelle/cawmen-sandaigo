@@ -132,7 +132,8 @@ async def test_app_highlights_detective_location_not_fugitive() -> None:
         cawmen_app = pilot.app
         assert isinstance(cawmen_app, CawmenApp)
 
-        assert cawmen_app._detective_location == "paris"
+        assert cawmen_app._session is not None
+        assert cawmen_app._session.detective_location == "paris"
         assert not hasattr(cawmen_app, "_fugitive_location") or (
             cawmen_app._fugitive_location is None  # type: ignore[attr-defined]
         )
@@ -182,7 +183,8 @@ async def test_pressing_enter_on_first_neighbour_sends_move() -> None:
         await pilot.press("enter")
         await pilot.pause(delay=0.1)
 
-        assert cawmen_app._detective_location == "rome"
+        assert cawmen_app._session is not None
+        assert cawmen_app._session.detective_location == "rome"
 
 
 async def test_pressing_down_then_enter_moves_to_second_neighbour() -> None:
@@ -207,7 +209,8 @@ async def test_pressing_down_then_enter_moves_to_second_neighbour() -> None:
         await pilot.press("enter")
         await pilot.pause(delay=0.1)
 
-        assert cawmen_app._detective_location == "madrid"
+        assert cawmen_app._session is not None
+        assert cawmen_app._session.detective_location == "madrid"
 
 
 # ---------------------------------------------------------------------------
@@ -229,7 +232,8 @@ async def test_app_updates_state_after_move() -> None:
 
         clock = cawmen_app.query_one("#clock", Static)
         assert "Day 2" in str(clock.render())
-        assert cawmen_app._detective_location == "berlin"
+        assert cawmen_app._session is not None
+        assert cawmen_app._session.detective_location == "berlin"
 
 
 async def test_terminal_outcome_clears_neighbour_list() -> None:
@@ -269,7 +273,8 @@ async def test_terminal_outcome_starts_playback() -> None:
         await cawmen_app._move("berlin")
         await pilot.pause()
 
-        assert cawmen_app._playback_route == ["paris", "rome", "madrid", "escape"]
+        assert cawmen_app._playback is not None
+        assert cawmen_app._playback.route == ["paris", "rome", "madrid", "escape"]
 
 
 # ---------------------------------------------------------------------------
@@ -324,11 +329,12 @@ async def test_playback_advances_through_route_steps() -> None:
         await cawmen_app._move("berlin")
         await pilot.pause()
 
+        assert cawmen_app._playback is not None
         cawmen_app._advance_playback()
-        assert cawmen_app._playback_current == "paris"
+        assert cawmen_app._playback.current == "paris"
 
         cawmen_app._advance_playback()
-        assert cawmen_app._playback_current == "berlin"
+        assert cawmen_app._playback.current == "berlin"
 
 
 async def test_win_banner_appears_after_full_playback() -> None:
@@ -429,7 +435,8 @@ async def test_new_case_key_starts_fresh_case_after_playback() -> None:
 
         assert len(fake.seeds_seen) == 2
         assert fake.seeds_seen[1] != first_seed
-        assert cawmen_app._detective_location == "paris"
+        assert cawmen_app._session is not None
+        assert cawmen_app._session.detective_location == "paris"
 
 
 async def test_quit_key_exits_app() -> None:
