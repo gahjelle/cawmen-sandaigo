@@ -38,66 +38,86 @@ checks made them non-negotiable and — importantly for an agent-driven project 
 agent immediate, mechanical feedback instead of a reviewer's after-the-fact "we don't do
 it that way here."
 
-That reasoning was sound. What it missed is that *maintaining* the enforcement tool is
-itself work, and that work never appears on the roadmap.
+That reasoning was sound. The idea was good enough, in fact, that it didn't stay in this
+repo.
 
 ## Why we replaced it
 
-[Garuff](https://pypi.org/project/garuff/) is a maintained, off-the-shelf convention linter
-that happens to encode almost exactly the rules we'd hand-rolled — and then some. Its
-catalog is a **superset**: the six `CAW` rules have direct `GAC` equivalents, plus a batch
-of extra opinionated ones (`GAC007`–`GAC011`) we hadn't gotten around to writing.
+Here's the thing the tidy "we adopted a library" story would get wrong:
+[Garuff](https://pypi.org/project/garuff/) is not some third-party project we found. It's
+the same tool, by the same author, extracted and given a home. The name says so —
+**GA**ruff is *Geir Arne's extra ruff-inspired linter*. It still encodes exactly one
+person's opinions about how code should be written. We didn't outsource our conventions;
+we packaged them.
 
-The motivations were the ordinary ones behind any "delete our code, adopt the library"
-decision, and they're worth naming because the trade-off recurs constantly:
+The problem `repolint` had was not quality — it was **multiplication**. A convention linter
+that proves its worth in one repo is a convention linter you want in the *next* repo, and
+the one after that. And the way that spreads, absent a package, is copy-paste. Before long
+there was a `tools/repolint` in several projects, each a slightly-drifted fork of the
+others, and keeping them in sync was a manual chore performed entirely from memory:
 
-- **The tool was undifferentiated.** `repolint` was not part of the product. It was
-  scaffolding. Every hour spent extending it — adding a rule, fixing a false positive,
-  teaching it a new `--fix` — was an hour not spent on the game. A dependency moves that
-  maintenance onto someone else.
-- **The superset was strictly more valuable.** `GAC009` (keyword-only dataclasses) and
-  `GAC010` (docstrings on every function) were conventions we *wanted* but hadn't
-  enforced. Adopting garuff got them for free, along with a configurable positional-arg
-  cap (`GAC008`).
+- Add a rule in one repo, and you had to remember to paste it into the rest.
+- Fix a false positive in another, and the fix lived only there until you carried it over.
+- Every project's linter slowly diverged from every other's, for no reason anyone chose.
+
+That does not scale. Three copies is annoying; ten is untenable. So the copies were
+collected into **one** tool — maintained in one place, released to PyPI, installed as a
+normal dev dependency. That garuff's rule catalog is a **superset** of this repo's `CAW`
+rules is no coincidence: it's the *union* of what the various projects' repolints had each
+grown to need, with the `CAW` six sitting inside it as `GAC` equivalents and a batch of
+newer ones (`GAC007`–`GAC011`) alongside. Garuff is this repo's idea, extended scalably to
+every repo.
+
+The wins are the ordinary wins of DRY, just applied to tooling instead of application code:
+
+- **One source of truth.** A rule is written, fixed, and documented once. Every project on
+  the same garuff version gets the same behaviour — no drift, no re-paste.
+- **Versioned distribution.** `uv add --dev garuff` and a pinned `uv.lock` entry, exactly
+  like any other dependency. Upgrades are deliberate, per repo.
 - **The catalog documents itself.** `uv run garuff rule --all` prints every rule with its
   *why* and its *fix*. Our hand-maintained rule list in `docs/agents/conventions.md` was a
-  second source of truth that could drift from the code. We deleted it and pointed at the
-  tool.
+  second source of truth that could drift; we deleted it and pointed at the tool.
 
 ## What the swap actually cost
 
-"Adopt the library" is never free, and this migration made the hidden costs visible in one
-commit:
+Centralising a tool is not free, and this migration made the costs concrete in one commit:
 
-- **New rules surface old violations.** Garuff's superset immediately failed the build.
-  We had to fix what it found: a keyword-only `target` on `apply_move` (`GAC008`),
-  `kw_only=True` added to **eleven** dataclasses (`GAC009`), and one-line docstrings
-  written for **eight** previously undocumented functions (`GAC010`). That's the price of
-  a stricter baseline — you pay the accumulated debt the moment you turn it on.
+- **The superset is stricter, so it surfaced old debt.** The moment garuff ran, the build
+  failed on rules `repolint` never had. We fixed what it found: a keyword-only `target` on
+  `apply_move` (`GAC008`), `kw_only=True` added to **eleven** dataclasses (`GAC009`), and
+  one-line docstrings written for **eight** previously undocumented functions (`GAC010`).
+  A shared linter carries the accumulated opinions of *all* the repos it was distilled
+  from, so adopting it here meant paying for conventions this repo hadn't enforced yet.
 - **Second-order churn.** Those new docstrings weren't inert. FastAPI turns route-handler
   docstrings into OpenAPI operation descriptions, so `openapi.json` had to be regenerated.
   A convention change rippled into a generated artifact — a good reminder that the gate's
   steps are not independent.
-- **You inherit someone else's opinions.** With `repolint` we could add or bend any rule
-  in an afternoon. With garuff, the catalog is theirs. When their defaults and ours
-  disagree, the escape hatch is configuration (`[tool.garuff]` in `pyproject.toml`, where
-  `GAC008`'s `max_positional_args = 2` now lives), not a code edit. That's less control,
-  traded for zero maintenance — usually the right trade, but a real one.
+- **A shared tool must be configurable, not forked.** When one repo needs a rule tuned, the
+  answer can no longer be "edit the script" — that would desync it again, the very problem
+  we were escaping. It has to be a knob. So per-repo differences now live in
+  `[tool.garuff]` in `pyproject.toml` (here, `GAC008`'s `max_positional_args = 2`) rather
+  than in a local edit.
+- **A rule change is now a release, not a save.** Improving a rule means editing garuff,
+  cutting a PyPI version, and bumping the dependency in each consuming repo — slower than
+  patching an in-tree script. That latency is the price of one canonical implementation,
+  and it's usually worth paying. What we did *not* give up is control or opinion: the tool
+  is still ours, the rules are still ours.
 
 The plumbing itself was mechanical: point `just conventions`, pre-commit, and CI at
 `garuff check`; add garuff to the dev group; delete the entire `tools/` tree and drop
 `tools/tests` from the pytest `testpaths`.
 
-## The tell for "delete our code"
+## The tell for "extract this into a package"
 
-The cleanest signal that a homegrown tool has outlived its purpose is when a maintained
-project appears that does a **superset** of what yours does. At that point your version is
-pure liability: the same value, plus a maintenance burden, minus the extra rules and the
-community fixing bugs you haven't hit yet. `repolint` earned its keep by proving the
-conventions were worth enforcing at all — and the moment garuff existed, the best thing it
-could do was get out of the way.
+The signal here was not "a maintained project appeared that does what ours does." It was
+"I've copy-pasted the same bespoke tool into three repos and I'm hand-syncing them." That
+is the moment a per-project script wants to become an installed package: not because the
+idea was wrong, but because the idea was *right enough to reuse*, and copy-paste is not a
+reuse strategy. `repolint` earned its keep by proving, in one repo, that these conventions
+were worth enforcing at all. Garuff is what that proof looks like once it has to hold for
+many.
 
 We left one breadcrumb rather than rewriting history: the Stage 0
 [quality-gate article](./00-the-fugitive-moves/quality-gate.md) still describes `repolint`
 as it shipped, with an editor's note pointing here. The story of *why* we built our own is
-worth keeping even after the tool is gone.
+worth keeping even after the tool moved out.
