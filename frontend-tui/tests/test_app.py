@@ -41,7 +41,7 @@ class FakeClient:
     detective_start: str = "paris"
     initial_state: CaseState = field(
         default_factory=lambda: CaseState(
-            day=1, detective_location="paris", status="in_progress"
+            clock="Day 1, 06:00", detective_location="paris", status="in_progress"
         )
     )
     move_results: list[CaseState | TerminalState | CaseOver | IllegalMove] = field(
@@ -115,13 +115,13 @@ async def test_app_shows_location_list_on_mount() -> None:
 
 
 async def test_app_shows_clock_on_mount() -> None:
-    """On mount the In-Game Clock shows the current day."""
+    """On mount the In-Game Clock shows the backend-rendered day and hour."""
     app = CawmenApp(FakeClient())
     async with app.run_test() as pilot:
         await pilot.pause()
         clock = pilot.app.query_one("#clock", Static)
 
-        assert "Day 1" in str(clock.render())
+        assert "Day 1, 06:00" in str(clock.render())
 
 
 async def test_app_highlights_detective_location_not_fugitive() -> None:
@@ -150,7 +150,7 @@ async def test_app_shows_neighbors_of_detective_location() -> None:
             locations=locations,
             detective_start="paris",
             initial_state=CaseState(
-                day=1, detective_location="paris", status="in_progress"
+                clock="Day 1, 06:00", detective_location="paris", status="in_progress"
             ),
         )
     )
@@ -165,12 +165,14 @@ async def test_app_shows_neighbors_of_detective_location() -> None:
 async def test_pressing_enter_on_first_neighbour_sends_move() -> None:
     """Pressing Enter on a highlighted neighbour fires the move to that location."""
     # paris neighbours: ["rome", "madrid"]; first item highlighted by default → rome
-    next_state = CaseState(day=2, detective_location="rome", status="in_progress")
+    next_state = CaseState(
+        clock="Day 1, 14:00", detective_location="rome", status="in_progress"
+    )
     app = CawmenApp(
         FakeClient(
             detective_start="paris",
             initial_state=CaseState(
-                day=1, detective_location="paris", status="in_progress"
+                clock="Day 1, 06:00", detective_location="paris", status="in_progress"
             ),
             move_results=[next_state],
         )
@@ -190,12 +192,14 @@ async def test_pressing_enter_on_first_neighbour_sends_move() -> None:
 async def test_pressing_down_then_enter_moves_to_second_neighbour() -> None:
     """Pressing Down then Enter selects the second neighbour."""
     # paris neighbours: ["rome", "madrid"]; down moves to madrid
-    next_state = CaseState(day=2, detective_location="madrid", status="in_progress")
+    next_state = CaseState(
+        clock="Day 1, 14:00", detective_location="madrid", status="in_progress"
+    )
     app = CawmenApp(
         FakeClient(
             detective_start="paris",
             initial_state=CaseState(
-                day=1, detective_location="paris", status="in_progress"
+                clock="Day 1, 06:00", detective_location="paris", status="in_progress"
             ),
             move_results=[next_state],
         )
@@ -219,8 +223,10 @@ async def test_pressing_down_then_enter_moves_to_second_neighbour() -> None:
 
 
 async def test_app_updates_state_after_move() -> None:
-    """After a move the clock increments and detective location updates."""
-    next_state = CaseState(day=2, detective_location="berlin", status="in_progress")
+    """After a move the clock advances (backend-rendered) and location updates."""
+    next_state = CaseState(
+        clock="Day 1, 14:00", detective_location="berlin", status="in_progress"
+    )
     app = CawmenApp(FakeClient(move_results=[next_state]))
     async with app.run_test() as pilot:
         await pilot.pause()
@@ -231,7 +237,7 @@ async def test_app_updates_state_after_move() -> None:
         await pilot.pause()
 
         clock = cawmen_app.query_one("#clock", Static)
-        assert "Day 2" in str(clock.render())
+        assert "Day 1, 14:00" in str(clock.render())
         assert cawmen_app._session is not None
         assert cawmen_app._session.detective_location == "berlin"
 
@@ -239,7 +245,7 @@ async def test_app_updates_state_after_move() -> None:
 async def test_terminal_outcome_clears_neighbour_list() -> None:
     """On a terminal outcome the neighbour list is cleared (no more moves)."""
     terminal = TerminalState(
-        day=2,
+        clock="Day 2, 06:00",
         detective_location="berlin",
         status="won",
         fugitive_route=["paris", "berlin", "escape"],
@@ -259,7 +265,7 @@ async def test_terminal_outcome_clears_neighbour_list() -> None:
 async def test_terminal_outcome_starts_playback() -> None:
     """On a terminal outcome the app stores the route and is ready to play it back."""
     terminal = TerminalState(
-        day=3,
+        clock="Day 3, 06:00",
         detective_location="berlin",
         status="lost",
         fugitive_route=["paris", "rome", "madrid", "escape"],
@@ -285,7 +291,7 @@ async def test_terminal_outcome_starts_playback() -> None:
 async def test_route_widget_accumulates_path_during_playback() -> None:
     """Each advance step appends the next location name to #route."""
     terminal = TerminalState(
-        day=2,
+        clock="Day 2, 06:00",
         detective_location="berlin",
         status="won",
         fugitive_route=["paris", "rome", "escape"],
@@ -315,7 +321,7 @@ async def test_route_widget_accumulates_path_during_playback() -> None:
 async def test_playback_advances_through_route_steps() -> None:
     """Each _advance_playback call advances the current stop to the next position."""
     terminal = TerminalState(
-        day=2,
+        clock="Day 2, 06:00",
         detective_location="berlin",
         status="won",
         fugitive_route=["paris", "berlin", "escape"],
@@ -340,7 +346,7 @@ async def test_playback_advances_through_route_steps() -> None:
 async def test_win_banner_appears_after_full_playback() -> None:
     """After advancing through the full route, 'Caught them!' appears in #banner."""
     terminal = TerminalState(
-        day=2,
+        clock="Day 2, 06:00",
         detective_location="berlin",
         status="won",
         fugitive_route=["paris", "berlin", "escape"],
@@ -365,7 +371,7 @@ async def test_win_banner_appears_after_full_playback() -> None:
 async def test_loss_banner_appears_after_full_playback() -> None:
     """After the full route plays back on a loss, 'The trail went cold.' appears."""
     terminal = TerminalState(
-        day=3,
+        clock="Day 3, 06:00",
         detective_location="paris",
         status="lost",
         fugitive_route=["paris", "rome", "escape"],
@@ -406,12 +412,14 @@ class TrackingFakeClient(FakeClient):
 async def test_new_case_key_starts_fresh_case_after_playback() -> None:
     """Pressing N after full playback creates a new case with a different seed."""
     terminal = TerminalState(
-        day=2,
+        clock="Day 2, 06:00",
         detective_location="berlin",
         status="won",
         fugitive_route=["paris", "berlin", "escape"],
     )
-    next_case_state = CaseState(day=1, detective_location="paris", status="in_progress")
+    next_case_state = CaseState(
+        clock="Day 1, 06:00", detective_location="paris", status="in_progress"
+    )
     fake = TrackingFakeClient(
         move_results=[terminal],
         initial_state=next_case_state,

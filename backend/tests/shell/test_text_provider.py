@@ -7,25 +7,32 @@ from cawmen_backend.core.clue import ColdTrail, Sighting
 from cawmen_backend.shell.text_provider import TemplatedTextProvider
 
 
-def test_clock_renders_in_english() -> None:
-    """The clock renders with the English label by default."""
+def test_clock_renders_the_day_and_hour_in_english() -> None:
+    """The clock renders day and 24-hour waking time with the English label."""
     provider = TemplatedTextProvider()
 
-    assert provider.clock(day=3, language="en") == "Day 3"
+    assert provider.clock(day=3, hour=14, language="en") == "Day 3, 14:00"
+
+
+def test_clock_zero_pads_the_morning_hour() -> None:
+    """The waking-day start reads as a zero-padded 06:00."""
+    provider = TemplatedTextProvider()
+
+    assert provider.clock(day=1, hour=6, language="en") == "Day 1, 06:00"
 
 
 def test_clock_renders_in_the_requested_language() -> None:
     """The clock honours the requested Language Preference."""
     provider = TemplatedTextProvider()
 
-    assert provider.clock(day=3, language="no") == "Dag 3"
+    assert provider.clock(day=3, hour=14, language="no") == "Dag 3, 14:00"
 
 
 def test_unknown_language_falls_back_to_english() -> None:
     """An unsupported Language Preference falls back to English."""
     provider = TemplatedTextProvider()
 
-    assert provider.clock(day=1, language="xx") == "Day 1"
+    assert provider.clock(day=1, hour=6, language="xx") == "Day 1, 06:00"
 
 
 def test_sighting_names_the_freshness_not_the_direction() -> None:

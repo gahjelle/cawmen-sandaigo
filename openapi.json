@@ -18,6 +18,10 @@
         "additionalProperties": false,
         "description": "Blind in-progress response for GET /cases/{id} and POST /cases/{id}/move.",
         "properties": {
+          "clock": {
+            "title": "Clock",
+            "type": "string"
+          },
           "day": {
             "title": "Day",
             "type": "integer"
@@ -26,6 +30,10 @@
             "title": "Detective Location",
             "type": "string"
           },
+          "hour": {
+            "title": "Hour",
+            "type": "integer"
+          },
           "status": {
             "title": "Status",
             "type": "string"
@@ -33,6 +41,8 @@
         },
         "required": [
           "day",
+          "hour",
+          "clock",
           "detective_location",
           "status"
         ],
@@ -180,6 +190,10 @@
         "additionalProperties": false,
         "description": "Terminal response for POST /cases/{id}/move when the case is over.",
         "properties": {
+          "clock": {
+            "title": "Clock",
+            "type": "string"
+          },
           "day": {
             "title": "Day",
             "type": "integer"
@@ -195,6 +209,10 @@
             "title": "Fugitive Route",
             "type": "array"
           },
+          "hour": {
+            "title": "Hour",
+            "type": "integer"
+          },
           "status": {
             "title": "Status",
             "type": "string"
@@ -202,6 +220,8 @@
         },
         "required": [
           "day",
+          "hour",
+          "clock",
           "detective_location",
           "status",
           "fugitive_route"
@@ -309,6 +329,16 @@
               "title": "Case Id",
               "type": "string"
             }
+          },
+          {
+            "in": "header",
+            "name": "accept-language",
+            "required": false,
+            "schema": {
+              "default": "en",
+              "title": "Accept-Language",
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -347,6 +377,16 @@
             "required": true,
             "schema": {
               "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "accept-language",
+            "required": false,
+            "schema": {
+              "default": "en",
+              "title": "Accept-Language",
               "type": "string"
             }
           }

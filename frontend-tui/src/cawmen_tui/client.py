@@ -42,18 +42,22 @@ class CaseCreated:
 
 @dataclass(frozen=True, kw_only=True)
 class CaseState:
-    """Blind in-progress state: day, detective position, status. Fugitive is hidden."""
+    """Blind in-progress state: rendered clock, detective position, status.
 
-    day: int
+    The clock arrives as backend-rendered prose (ADR-0008) so the thin client never
+    builds the string itself; the fugitive is hidden.
+    """
+
+    clock: str
     detective_location: str
     status: str
 
 
 @dataclass(frozen=True, kw_only=True)
 class TerminalState:
-    """Terminal case state: day, status (won/lost), and the revealed fugitive route."""
+    """Terminal case state: rendered clock, won/lost status, and the fugitive route."""
 
-    day: int
+    clock: str
     detective_location: str
     status: str
     fugitive_route: list[str]
@@ -124,7 +128,7 @@ class BackendClient:
         response.raise_for_status()
         data = response.json()
         return CaseState(
-            day=data["day"],
+            clock=data["clock"],
             detective_location=data["detective_location"],
             status=data["status"],
         )
@@ -144,13 +148,13 @@ class BackendClient:
         data = response.json()
         if "fugitive_route" in data:
             return TerminalState(
-                day=data["day"],
+                clock=data["clock"],
                 detective_location=data["detective_location"],
                 status=data["status"],
                 fugitive_route=data["fugitive_route"],
             )
         return CaseState(
-            day=data["day"],
+            clock=data["clock"],
             detective_location=data["detective_location"],
             status=data["status"],
         )

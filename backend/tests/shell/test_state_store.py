@@ -7,7 +7,9 @@ from cawmen_backend.shell.state_store import CaseRecord, InMemoryStateStore
 def test_saved_case_record_can_be_loaded_back() -> None:
     """A CaseRecord saved under a Case id is returned verbatim on load."""
     store = InMemoryStateStore()
-    state = CaseState(day=3, seed="s", detective_location="paris", status="in_progress")
+    state = CaseState(
+        day=3, hour=6, seed="s", detective_location="paris", status="in_progress"
+    )
     record = CaseRecord(state=state, scenario="minimal")
 
     store.save("case-1", record)

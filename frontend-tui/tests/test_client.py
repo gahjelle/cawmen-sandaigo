@@ -58,13 +58,13 @@ async def test_get_case_returns_blind_state(
     result = await client.get_case(created.case_id)
 
     assert isinstance(result, CaseState)
-    assert result.day == 1
+    assert result.clock == "Day 1, 06:00"
     assert result.detective_location in PRISM_LOCATIONS
     assert result.status == "in_progress"
     assert not hasattr(result, "fugitive_location")
 
 
-async def test_move_case_returns_incremented_day(
+async def test_move_case_returns_the_advanced_clock(
     backend_http: httpx.AsyncClient,
 ) -> None:
     """move_case maps POST /cases/{id}/move to a CaseState or TerminalState."""
@@ -79,8 +79,10 @@ async def test_move_case_returns_incremented_day(
     result = await client.move_case(created.case_id, neighbors[0])
 
     assert isinstance(result, (CaseState, TerminalState))
-    assert result.day == 2
     assert result.detective_location == neighbors[0]
+    # A single Move stays within the first waking day: 06:00 → 14:00.
+    if isinstance(result, CaseState):
+        assert result.clock == "Day 1, 14:00"
 
 
 async def test_move_case_returns_terminal_state_with_route_on_end(

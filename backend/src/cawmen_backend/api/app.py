@@ -2,12 +2,13 @@
 
 import uuid
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Annotated, Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Header, HTTPException
 from pydantic import Field
 
 from cawmen_backend.core.chase import (
+    WAKING_START,
     CaseOverError,
     CaseState,
     IllegalMoveError,
@@ -17,6 +18,7 @@ from cawmen_backend.core.route import build_route
 from cawmen_backend.models import FrozenModel
 from cawmen_backend.shell.scenario import load_location_graph
 from cawmen_backend.shell.state_store import CaseRecord, InMemoryStateStore
+from cawmen_backend.shell.text_provider import TemplatedTextProvider
 
 if TYPE_CHECKING:
     from cawmen_backend.core.location import LocationGraph
@@ -55,6 +57,8 @@ class CaseResponse(FrozenModel):
     """Blind in-progress response for GET /cases/{id} and POST /cases/{id}/move."""
 
     day: int
+    hour: int
+    clock: str
     detective_location: str
     status: str
 
@@ -63,6 +67,8 @@ class TerminalCaseResponse(FrozenModel):
     """Terminal response for POST /cases/{id}/move when the case is over."""
 
     day: int
+    hour: int
+    clock: str
     detective_location: str
     status: str
     fugitive_route: list[str]
@@ -95,6 +101,7 @@ def create_app(scenarios_dir: Path = Path("scenarios")) -> FastAPI:
     """Build the FastAPI app exposing the Cawmen Sandaigo REST API."""
     app = FastAPI(title="Cawmen Sandaigo", version="0.0.0")
     store = InMemoryStateStore()
+    text_provider = TemplatedTextProvider()
 
     @app.get("/health")
     def health() -> HealthResponse:
@@ -115,6 +122,7 @@ def create_app(scenarios_dir: Path = Path("scenarios")) -> FastAPI:
             CaseRecord(
                 state=CaseState(
                     day=1,
+                    hour=WAKING_START,
                     seed=seed,
                     detective_location=detective_start,
                     status="in_progress",
@@ -139,13 +147,21 @@ def create_app(scenarios_dir: Path = Path("scenarios")) -> FastAPI:
         )
 
     @app.get("/cases/{case_id}")
-    def get_case(case_id: str) -> CaseResponse:
+    def get_case(
+        case_id: str, accept_language: Annotated[str, Header()] = "en"
+    ) -> CaseResponse:
         """Return the blind in-progress state for `case_id`."""
         record = store.load(case_id)
         if record is None:
             raise HTTPException(status_code=404)
         return CaseResponse(
             day=record.state.day,
+            hour=record.state.hour,
+            clock=text_provider.clock(
+                day=record.state.day,
+                hour=record.state.hour,
+                language=accept_language,
+            ),
             detective_location=record.state.detective_location,
             status=record.state.status,
         )
@@ -157,7 +173,10 @@ def create_app(scenarios_dir: Path = Path("scenarios")) -> FastAPI:
 
     @app.post("/cases/{case_id}/move", responses=_move_responses)
     def move_case(
-        case_id: str, body: MoveRequest
+        case_id: str,
+        body: MoveRequest,
+        *,
+        accept_language: Annotated[str, Header()] = "en",
     ) -> CaseResponse | TerminalCaseResponse:
         """Apply a detective Move to `case_id`, returning the new or terminal state."""
         record = store.load(case_id)
@@ -173,11 +192,16 @@ def create_app(scenarios_dir: Path = Path("scenarios")) -> FastAPI:
             raise HTTPException(status_code=400, detail="illegal_move") from exc
 
         store.save(case_id, CaseRecord(state=new_state, scenario=record.scenario))
+        clock = text_provider.clock(
+            day=new_state.day, hour=new_state.hour, language=accept_language
+        )
 
         if outcome in {"won", "lost"}:
             route = build_route(graph, new_state.seed)
             return TerminalCaseResponse(
                 day=new_state.day,
+                hour=new_state.hour,
+                clock=clock,
                 detective_location=new_state.detective_location,
                 status=outcome,
                 fugitive_route=route.locations,
@@ -185,6 +209,8 @@ def create_app(scenarios_dir: Path = Path("scenarios")) -> FastAPI:
 
         return CaseResponse(
             day=new_state.day,
+            hour=new_state.hour,
+            clock=clock,
             detective_location=new_state.detective_location,
             status=outcome,
         )

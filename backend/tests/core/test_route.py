@@ -72,6 +72,7 @@ def test_has_escaped_is_true_at_end_of_route() -> None:
     route = generate_route(GRAPH, random.Random(0))  # noqa: S311
     final_day = CaseState(
         day=len(route.locations) - 1,
+        hour=6,
         seed="s",
         detective_location="paris",
         status="in_progress",

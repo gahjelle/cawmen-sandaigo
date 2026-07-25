@@ -114,7 +114,7 @@ class CawmenApp(App[None]):
         if self._session is None:
             return
         self._session.detective_location = state.detective_location
-        self.query_one("#clock", Static).update(f"Day {state.day}")
+        self.query_one("#clock", Static).update(state.clock)
 
         lines = [
             f"[reverse]{name}[/reverse]" if loc_id == state.detective_location else name

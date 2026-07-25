@@ -102,7 +102,7 @@ async def test_post_cases_same_seed_produces_same_result(
 async def test_get_case_returns_day_one_detective_location_and_status(
     client: httpx.AsyncClient,
 ) -> None:
-    """GET /cases/{id} is blind: day, detective_location, status — fugitive hidden."""
+    """GET /cases/{id} is blind: clock, detective_location, status — fugitive hidden."""
     r = await client.post("/cases", json={"scenario": "minimal", "seed": "g1"})
     case_id = r.json()["case_id"]
 
@@ -111,9 +111,23 @@ async def test_get_case_returns_day_one_detective_location_and_status(
     assert response.status_code == 200
     data = response.json()
     assert data["day"] == 1
+    assert data["hour"] == 6
+    assert data["clock"] == "Day 1, 06:00"
     assert data["detective_location"] in PRISM_LOCATIONS
     assert data["status"] == "in_progress"
     assert "fugitive_location" not in data
+
+
+async def test_get_case_renders_the_clock_in_the_requested_language(
+    client: httpx.AsyncClient,
+) -> None:
+    """GET /cases/{id} honours Accept-Language when rendering the clock prose."""
+    r = await client.post("/cases", json={"scenario": "minimal", "seed": "g2"})
+    case_id = r.json()["case_id"]
+
+    response = await client.get(f"/cases/{case_id}", headers={"Accept-Language": "no"})
+
+    assert response.json()["clock"] == "Dag 1, 06:00"
 
 
 async def test_get_unknown_case_returns_404(client: httpx.AsyncClient) -> None:
@@ -126,10 +140,10 @@ async def test_get_unknown_case_returns_404(client: httpx.AsyncClient) -> None:
 # ---------------------------------------------------------------------------
 
 
-async def test_move_advances_day_and_returns_blind_response(
+async def test_move_spends_eight_hours_and_returns_a_blind_response(
     client: httpx.AsyncClient,
 ) -> None:
-    """POST /cases/{id}/move advances the day and returns a blind response."""
+    """One Move spends 8h within the waking day and returns a blind clock response."""
     r = await client.post("/cases", json={"scenario": "minimal", "seed": "m1"})
     data = r.json()
     case_id = data["case_id"]
@@ -144,10 +158,14 @@ async def test_move_advances_day_and_returns_blind_response(
 
     assert response.status_code == 200
     body = response.json()
-    assert body["day"] == 2
     assert body["detective_location"] == first_neighbor
     assert body["status"] in {"in_progress", "won", "lost"}
     assert "fugitive_location" not in body
+    # A single Move stays inside the first waking day: 06:00 → 14:00, day unchanged.
+    if body["status"] == "in_progress":
+        assert body["day"] == 1
+        assert body["hour"] == 14
+        assert body["clock"] == "Day 1, 14:00"
 
 
 async def test_move_on_unknown_case_returns_404(client: httpx.AsyncClient) -> None:
